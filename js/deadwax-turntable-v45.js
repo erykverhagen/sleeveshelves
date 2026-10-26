@@ -19,7 +19,7 @@
     turn: '<path d="M3 11a9 9 0 0 1 15.5-6.3L21 7"/><path d="M21 3v4h-4"/><path d="M21 13a9 9 0 0 1-15.5 6.3L3 17"/><path d="M3 21v-4h4"/>',
     swap: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/><path d="M12 3a9 9 0 0 1 9 9"/>',
     needle: '<path d="M4 20 17 7l3 3L7 23"/><path d="m15 9-2-2 4-4 4 4-4 4"/>',
-    close: '<path d="M18 6 6 18M6 6l12 12"/>'
+    minimize: '<path d="m6 10 6 6 6-6"/>'
   };
   function icon(name) {
     return `<svg class="dw44-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[name] || ICON.play}</svg>`;
@@ -41,6 +41,11 @@
   let operationId = 0;
   let sleeveFlipped = false;
   let pendingTrackIndex = null;
+  // Hover/drag preview is UI-only until the stylus is released. Spotify is never
+  // instructed to seek while the stylus is in motion.
+  let cuePreviewIndex = null;
+  let cueOriginIndex = null;
+  let suppressGrooveClickUntil = 0;
 
   // A catalog/playback adapter contract for future licensed providers.
   // Only the demo adapter is registered in this release.
@@ -150,7 +155,7 @@
       if (op!==operationId) return;
       if (session) await providers.get(session.providerId)?.stop?.();
       const next={providerId:adapter.id,record,side,tracks:record.sides[side],trackIndex:0,elapsed:0,status:'loading',providerTrackDuration:0};
-      session=next; expanded=true; sleeveFlipped=false; pendingTrackIndex=null;
+      session=next; expanded=true; sleeveFlipped=false; pendingTrackIndex=null;cuePreviewIndex=null;cueOriginIndex=null;
       lastTick=performance.now(); render();
       await adapter.start({record,side,tracks:next.tracks,index:0});
       if(op!==operationId || session!==next) return;
@@ -185,33 +190,34 @@
   }
   function stop() {
     if(!session)return;
-    ++operationId;pendingTrackIndex=null;
+    ++operationId;pendingTrackIndex=null;cuePreviewIndex=null;cueOriginIndex=null;
     Promise.resolve(providers.get(session.providerId)?.stop?.()).catch(showPlaybackError);
     session.status='stopped';session.trackIndex=0;session.elapsed=0;session.providerTrackDuration=0;render();
   }
   function turn() {
     if(!session)return;
     const opposite=siblingSide(session.record.sides,session.side);if(!opposite)return;
-    ++operationId;pendingTrackIndex=null;sleeveFlipped=false;
+    ++operationId;pendingTrackIndex=null;cuePreviewIndex=null;cueOriginIndex=null;sleeveFlipped=false;
     Promise.resolve(providers.get(session.providerId)?.stop?.()).catch(showPlaybackError);
     session.side=opposite;session.tracks=session.record.sides[opposite];session.trackIndex=0;
     session.elapsed=0;session.providerTrackDuration=0;session.status='stopped';render();
   }
   function turnToSide(side) {
     if(!session || !session.record.sides[side])return;
-    ++operationId; pendingTrackIndex=null;
+    ++operationId; pendingTrackIndex=null;cuePreviewIndex=null;cueOriginIndex=null;
     Promise.resolve(providers.get(session.providerId)?.stop?.()).catch(showPlaybackError);
     session.side=side;session.tracks=session.record.sides[side];session.trackIndex=0;
     session.elapsed=0;session.providerTrackDuration=0;session.status='stopped';render();
   }
   function swap() {
-    ++operationId;pendingTrackIndex=null;sleeveFlipped=false;
+    ++operationId;pendingTrackIndex=null;cuePreviewIndex=null;cueOriginIndex=null;sleeveFlipped=false;
     if(session)Promise.resolve(providers.get(session.providerId)?.stop?.()).catch(showPlaybackError);
     session=null;render();
     if($('#detOv')?.classList.contains('on') && typeof window.closeModal==='function')window.closeModal();
   }
   async function cueTrack(index) {
     if(!session || session.status==='loading' || index<0 || index>=session.tracks.length)return;
+    cuePreviewIndex=null;cueOriginIndex=null;
     if(session.status==='paused' && pendingTrackIndex===index)return;
     ++operationId;
     const adapter=providers.get(session.providerId);
@@ -228,7 +234,7 @@
       if(Number.isFinite(event.seconds))session.elapsed=Math.max(0,event.seconds);
       if(Number.isFinite(event.duration))session.providerTrackDuration=Math.max(0,event.duration);
       const deck=dock && $('.dw44-deck',dock);
-      if(deck)deck.style.setProperty('--dw44-track-angle',`${(groovePosition()*7.2).toFixed(3)}deg`);
+      if(deck)deck.style.setProperty('--dw44-track-angle',`${(groovePosition()*12).toFixed(3)}deg`);
     } else if(event.kind==='finished') {
       if(session.status==='stopped'||session.status==='finished')return;
       session.status='finished';session.elapsed=0;
@@ -245,7 +251,7 @@
     session.elapsed += dt;
     if (session.elapsed < FEATURE.demoSecondsPerTrack) {
       const deck = dock && $('.dw44-deck', dock);
-      if (deck) deck.style.setProperty('--dw44-track-angle', `${(groovePosition()*7.2).toFixed(3)}deg`);
+      if (deck) deck.style.setProperty('--dw44-track-angle', `${(groovePosition()*12).toFixed(3)}deg`);
       return;
     }
     session.elapsed = 0;
@@ -389,7 +395,8 @@
     // Retain the same deck node between state changes. Replacing it would make
     // CSS transitions jump instantly and restart the spinning record animation.
     const spinning = session.status === 'playing';
-    const position = needlePosition();
+    const position = cuePreviewIndex !== null ? 'is-lifted' : needlePosition();
+    deck.classList.toggle('is-cueing',cuePreviewIndex !== null);
     deck.classList.toggle('is-playing', spinning);
     deck.classList.toggle('is-idle', !spinning);
     const disc = $('.dw44-groove-map', deck);
@@ -400,13 +407,15 @@
     if (disc) {
       for(const band of $$('.dw44-groove-band',disc)) {
         band.classList.toggle('is-current',Number(band.dataset.dw44GrooveTrack) === session.trackIndex);
+        band.classList.toggle('is-cue-target',cuePreviewIndex!==null && Number(band.dataset.dw44GrooveTrack)===cuePreviewIndex);
       }
     }
     const n = $('.dw44-track-total', deck);
     if (n) n.textContent = `${session.tracks.length} TRACK${session.tracks.length===1?'':'S'} · SIDE ${session.side}`;
     // The real vinyl spiral leads inward as the track progresses. At the inner
-    // run-out groove the needle has moved ≈7.2° from the lead-in position.
-    deck.style.setProperty('--dw44-track-angle', `${(groovePosition()*7.2).toFixed(3)}deg`);
+    // Physically proportioned swing from the outer lead-in band to the inner run-out.
+    const visualProgress=cuePreviewIndex===null?groovePosition():trackGrooves()[cuePreviewIndex].start+.07*(trackGrooves()[cuePreviewIndex].end-trackGrooves()[cuePreviewIndex].start);
+    deck.style.setProperty('--dw44-track-angle', `${(visualProgress*12).toFixed(3)}deg`);
     const arm = $('.dw44-tonearm', deck);
     if (arm) {
       arm.classList.remove('is-lowered', 'is-lifted', 'is-parked');
@@ -414,6 +423,7 @@
     }
     $('.dw44-platter', deck)?.classList.toggle('is-spinning', spinning);
     $('.dw44-deck-led', deck)?.classList.toggle('is-on', spinning);
+    updateCuePreview();
     const description = position === 'is-parked' ? 'returned to its rest' : position === 'is-lifted' ? 'raised over the groove' : 'lowered onto the groove';
     deck.setAttribute('aria-label', `Digital turntable with ${session.tracks.length} visible track groove bands on side ${session.side}, ${spinning?'spinning':'stationary'} record and needle ${description}`);
   }
@@ -429,7 +439,7 @@
         </div></div>
         <div class="dw44-tonearm ${needlePosition()}">
           <div class="dw44-arm-swing">
-            <svg class="dw44-arm-art" viewBox="0 0 350 162" preserveAspectRatio="none" aria-hidden="true">
+            <svg class="dw44-arm-art" viewBox="0 0 350 140" preserveAspectRatio="none" aria-hidden="true">
               <defs>
                 <linearGradient id="dw44-arm-chrome" x1="0%" y1="0%" x2="0%" y2="100%">
                   <stop offset="0%" stop-color="#fff0ce"/><stop offset="25%" stop-color="#9b958a"/>
@@ -439,23 +449,29 @@
                   <stop offset="0%" stop-color="#a9a59a"/><stop offset="60%" stop-color="#3b3834"/><stop offset="100%" stop-color="#797063"/>
                 </linearGradient>
               </defs>
-              <path d="M289 29 L270 37 C260 42 258 38 247 41 L155 110 L148 118" fill="none" stroke="rgba(0,0,0,.63)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" transform="translate(2 3)"/>
-              <path d="M289 29 L270 37 C260 42 258 38 247 41 L155 110 L148 118" fill="none" stroke="url(#dw44-arm-chrome)" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M263 40 L156 112" fill="none" stroke="rgba(255,247,225,.5)" stroke-width="1" stroke-linecap="round"/>
-              <path d="M141 119 L149 112 L156 121 L146 130 Z" fill="url(#dw44-head-chrome)" stroke="#c4b9a4" stroke-width=".9"/>
-              <path d="M146 127 L139 126" stroke="#c7b69d" stroke-width="1.4" stroke-linecap="round" class="dw44-stylus"/>
-              <circle cx="139" cy="126" r="1.25" fill="#f5dba4" class="dw44-stylus"/>
-              <circle cx="139" cy="126" r="13" fill="transparent" class="dw45-stylus-grip"><title>Drag the needle to a groove</title></circle>
+              <path d="M230 15 L217 25 C204 29 202 28 189 39 L142 77 L138 82" fill="none" stroke="rgba(0,0,0,.63)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" transform="translate(2 3)"/>
+              <path d="M230 15 L217 25 C204 29 202 28 189 39 L142 77 L138 82" fill="none" stroke="url(#dw44-arm-chrome)" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M206 27 L143 77" fill="none" stroke="rgba(255,247,225,.5)" stroke-width="1" stroke-linecap="round"/>
+              <path d="M133 77 L143 74 L150 83 L137 91 Z" fill="url(#dw44-head-chrome)" stroke="#c4b9a4" stroke-width=".9"/>
+              <path d="M138 88 L132 87" stroke="#c7b69d" stroke-width="1.4" stroke-linecap="round" class="dw44-stylus"/>
+              <circle cx="132" cy="87" r="1.25" fill="#f5dba4" class="dw44-stylus"/>
+              <circle cx="132" cy="87" r="13" fill="transparent" class="dw45-stylus-grip"><title>Drag the needle to a groove</title></circle>
             </svg>
           </div>
           <span class="dw44-arm-pivot"></span>
           <span class="dw44-arm-cradle" aria-hidden="true"></span>
         </div>
         <div class="dw44-deck-rpm">33⅓ <span>RPM</span></div>
-        <div class="dw44-deck-brand">DW<span> / </span>45</div>
+        <div class="dw44-deck-brand" title="Record shelf ID"><small>SHELF ID</small>${escapeHtml(session.record.shelfId || 'UNASSIGNED')}</div>
         <div class="dw44-track-total">${session.tracks.length} TRACK${session.tracks.length===1?'':'S'} · SIDE ${escapeHtml(session.side)}</div>
         <div class="dw44-deck-led ${spinning?'is-on':''}"></div>
       </div>
+        <div class="dw45-cue-preview" id="dw45CuePreview" hidden aria-live="polite">
+          <small class="dw45-cue-kicker">CUE <span class="dw45-cue-direction"></span></small>
+          <strong class="dw45-cue-position"></strong>
+          <span class="dw45-cue-title"></span>
+          <small class="dw45-cue-hint">RELEASE · DROP TO PLAY</small>
+        </div>
     </div>`;
   }
   function sleeveTrackMarkup() {
@@ -464,7 +480,8 @@
     return `<div class="dw45-sleeve-list"><span class="dw45-sleeve-title">${escapeHtml(session.record.album)} · Tracklist</span>${all.map((t)=>{
       const idx=session.record.sides[t.side].findIndex(x=>x.position===t.position);
       const active=t.side===session.side && idx===session.trackIndex;
-      return `<button type="button" class="dw45-sleeve-track ${active?'is-current':''}" data-dw45-track="${idx}" data-dw45-side="${escapeHtml(t.side)}" aria-label="Cue ${escapeHtml(t.position)} ${escapeHtml(t.title)}"><em>${escapeHtml(t.position)}</em><span>${escapeHtml(t.title)}</span></button>`;
+      const preview=t.side===session.side && idx===cuePreviewIndex;
+      return `<button type="button" class="dw45-sleeve-track ${active?'is-current':''} ${preview?'is-cue-target':''}" data-dw45-track="${idx}" data-dw45-side="${escapeHtml(t.side)}" aria-label="Cue ${escapeHtml(t.position)} ${escapeHtml(t.title)}"><em>${escapeHtml(t.position)}</em><span>${escapeHtml(t.title)}</span></button>`;
     }).join('')}</div>`;
   }
   function sleeveMarkup() {
@@ -478,6 +495,34 @@
       <div class="dw45-sleeve-actions"><span>ORIGINAL VINYL SLEEVE</span><button type="button" data-dw45-flip aria-label="${sleeveFlipped?'Show album cover':'Flip sleeve to view tracklist'}">${sleeveFlipped?'Show cover':'Flip sleeve ↻'}</button><small>Click cover for full details. Flip for tracks.</small></div>
     </div>`;
   }
+  function updateCuePreview() {
+    if (!dock || !session) return;
+    const panel=$('#dw45CuePreview',dock);
+    if (panel) {
+      panel.hidden=cuePreviewIndex===null;
+      if (cuePreviewIndex!==null) {
+        const track=session.tracks[cuePreviewIndex];
+        const movement=cuePreviewIndex>(cueOriginIndex??session.trackIndex)?'INWARD ↓':cuePreviewIndex<(cueOriginIndex??session.trackIndex)?'OUTWARD ↑':'CURRENT GROOVE';
+        $('.dw45-cue-direction',panel).textContent=movement;
+        $('.dw45-cue-position',panel).textContent=track.position || `TRACK ${cuePreviewIndex+1}`;
+        $('.dw45-cue-title',panel).textContent=track.title || 'Untitled';
+      }
+    }
+    for (const button of $$('.dw45-sleeve-track',dock)) {
+      const selected=cuePreviewIndex!==null && button.dataset.dw45Side===session.side && Number(button.dataset.dw45Track)===cuePreviewIndex;
+      button.classList.toggle('is-cue-target',selected);
+      if(selected) {
+        const list=button.closest('.dw45-sleeve-list');
+        if(list && sleeveFlipped) {
+          const top=button.offsetTop-list.offsetTop;
+          if(top<list.scrollTop)list.scrollTop=top;
+          else if(top+button.offsetHeight>list.scrollTop+list.clientHeight)list.scrollTop=top+button.offsetHeight-list.clientHeight;
+        }
+      }
+    }
+    const current=$('.dw44-current-track',dock);
+    if(current && cuePreviewIndex!==null) current.textContent=`CUE → ${session.tracks[cuePreviewIndex]?.position||''} · ${session.tracks[cuePreviewIndex]?.title||''}`;
+  }
   function updateSleeve() {
     const sleeve=$('#dw45Sleeve',dock);if(!sleeve)return;
     sleeve.classList.toggle('is-flipped',sleeveFlipped);
@@ -485,6 +530,7 @@
     if(list) { const temp=document.createElement('div'); temp.innerHTML=sleeveTrackMarkup(); list.replaceChildren(...Array.from(temp.firstElementChild?.childNodes || [])); }
     const button=$('[data-dw45-flip]',dock);
     if(button){button.textContent=sleeveFlipped?'Show cover':'Flip sleeve ↻';button.setAttribute('aria-label',sleeveFlipped?'Show album cover':'Flip sleeve to view tracklist');}
+    updateCuePreview();
   }
   function openPlayingRecord() {
     if(!session)return;
@@ -506,6 +552,7 @@
     dock.classList.toggle('dw44-is-open', !!session && expanded);
     if (!session) { dock.replaceChildren(); return; }
     if (!expanded) {
+      cuePreviewIndex=null;cueOriginIndex=null;
       dock.innerHTML = `<button type="button" class="dw44-mini" data-dw44-action="expand" aria-label="Open Digital Turntable" aria-expanded="false">
         <span class="dw44-mini-disc ${session.status==='playing'?'is-spinning':''}">${coverMarkup(session.record)}</span>
         <span class="dw44-mini-copy"><small>${escapeHtml(statusName())} · SIDE ${escapeHtml(session.side)}</small><strong>${escapeHtml(session.record.album)}</strong><span>${escapeHtml(currentTrackTitle())}</span></span>
@@ -526,13 +573,15 @@
       if (buttons) buttons.innerHTML = controls();
       syncDeck(priorDeck);
       updateSleeve();
+      const brand=$('.dw44-deck-brand',priorDeck);
+      if(brand)brand.innerHTML=`<small>SHELF ID</small>${escapeHtml(session.record.shelfId||'UNASSIGNED')}`;
       const foot=$('.dw44-dock-foot',dock);
       if(foot)foot.innerHTML=session.providerId==='spotify'?'<span>33⅓ RPM · SPOTIFY</span><span>DIGITAL STREAM</span>':'<span>33⅓ RPM · SIMULATED</span><span>NO AUDIO</span>';
       return;
     }
     dock.innerHTML = `
       <div class="dw44-dock-head"><div class="dw44-dock-brand"><span class="dw44-eyebrow">DEAD WAX <i>·</i> TURNTABLE</span><span class="dw44-premium">PREMIUM PREVIEW</span></div>
-        <button type="button" class="dw44-minimize" data-dw44-action="minimize" aria-label="Minimize turntable" title="Minimize turntable" aria-expanded="true">${icon('close')}</button></div>
+        <button type="button" class="dw44-minimize" data-dw44-action="minimize" aria-label="Minimize turntable" title="Minimize turntable" aria-expanded="true"><span class="dw45-minimize-text">MINIMIZE</span>${icon('minimize')}</button></div>
       ${turntableMarkup()}
       ${sleeveMarkup()}
       <div class="dw44-dock-info">
@@ -697,7 +746,7 @@
       cueTrack(Number(track.dataset.dw45Track));return;
     }
     const band=event.target.closest('[data-dw44-groove-track]');
-    if(band){event.preventDefault();cueTrack(Number(band.dataset.dw44GrooveTrack));return;}
+    if(band){event.preventDefault();if(performance.now()<suppressGrooveClickUntil)return;cueTrack(Number(band.dataset.dw44GrooveTrack));return;}
     const button = event.target.closest('[data-dw44-action]');
     if (!button || button.disabled) return;
     event.preventDefault();
@@ -709,34 +758,62 @@
     initialized = true;
     mountDock();
     let needleDrag=null;
+    function trackAtPointer(map,x,y) {
+      const rect=map.getBoundingClientRect();
+      const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+      const r=50*Math.hypot(x-cx,y-cy)/(rect.width/2);
+      const grooves=trackGrooves();
+      if(!grooves.length)return null;
+      // Nearest whole track. Unlike scrubbing, the needle snaps to a groove band.
+      let best=grooves[0],distance=Infinity;
+      for(const band of grooves){const d=Math.abs(r-(band.outer+band.inner)/2);
+        if(d<distance){distance=d;best=band;}}
+      return best.index;
+    }
+    function setCuePreview(index){
+      if(index===null||!session || index<0 || index>=session.tracks.length)return;
+      if(cuePreviewIndex!==index){
+        cuePreviewIndex=index;
+        syncDeck($('.dw44-deck',dock));
+      } else updateCuePreview();
+    }
     document.addEventListener('pointerdown',e=>{
       const grip=e.target.closest?.('.dw45-stylus-grip');
       const map=grip ? $('#dw44Dock .dw44-groove-map') : e.target.closest?.('.dw44-groove-map');
       if(!map||!session||session.status==='loading')return;
-      needleDrag={map,id:e.pointerId,startX:e.clientX,startY:e.clientY,grip:!!grip};
-      if(grip && session.status==='playing') needle(); // lift first, never skip live audio
+      needleDrag={map,id:e.pointerId,x:e.clientX,y:e.clientY,grip:!!grip,moved:false};
+      cueOriginIndex=session.trackIndex;
+      // Lift real audio immediately. Do not call Spotify seek until Drop needle.
+      if(session.status==='playing')void needle();
       try{(grip||map).setPointerCapture(e.pointerId);}catch{}
     });
     document.addEventListener('pointermove',e=>{
       const drag=needleDrag;
-      if(!drag||drag.id!==e.pointerId||!drag.grip||!session)return;
-      const rect=drag.map.getBoundingClientRect(),cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
-      const r=50*Math.hypot(e.clientX-cx,e.clientY-cy)/(rect.width/2);
-      const fraction=Math.min(1,Math.max(0,(46-r)/17));
-      const deck=$('.dw44-deck',dock);
-      if(deck)deck.style.setProperty('--dw44-track-angle',`${(fraction*7.2).toFixed(3)}deg`);
-    });
+      if(!drag||drag.id!==e.pointerId||!session)return;
+      if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)<1.5&&!drag.moved)return;
+      drag.moved=true;
+      setCuePreview(trackAtPointer(drag.map,e.clientX,e.clientY));
+      e.preventDefault();
+    },{passive:false});
     document.addEventListener('pointerup',e=>{
       const drag=needleDrag;needleDrag=null;
       if(!drag||drag.id!==e.pointerId||!session)return;
-      const rect=drag.map.getBoundingClientRect(),cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
-      const r=50*Math.hypot(e.clientX-cx,e.clientY-cy)/(rect.width/2);
-      const groove=trackGrooves().find(g=>r>=g.inner&&r<=g.outer);
-      if(groove){
-        // A release on a groove simulates lifting and moving the stylus.
-        // The actual playback begins only on the next Drop needle action.
-        cueTrack(groove.index);
-      } else if(drag.grip) render();
+      const index=drag.moved ? cuePreviewIndex : (drag.grip ? null : trackAtPointer(drag.map,e.clientX,e.clientY));
+      cuePreviewIndex=null;cueOriginIndex=null;
+      if(index!==null){
+        // Releasing the needle confirms ONE track at its beginning; user must
+        // drop it to play. Never automatically restart digital audio here.
+        suppressGrooveClickUntil=performance.now()+350;
+        void cueTrack(index);
+      } else {
+        const deck=$('.dw44-deck',dock);
+        if(deck)syncDeck(deck);
+      }
+    });
+    document.addEventListener('pointercancel',e=>{
+      if(!needleDrag||needleDrag.id!==e.pointerId)return;
+      needleDrag=null;cuePreviewIndex=null;cueOriginIndex=null;
+      const deck=$('.dw44-deck',dock);if(deck)syncDeck(deck);
     });
     document.addEventListener('click', onAction);
     const observer = new MutationObserver(() => {
