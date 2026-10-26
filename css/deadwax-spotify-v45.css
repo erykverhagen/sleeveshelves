@@ -1,0 +1,24 @@
+/* Dead Wax v45 Spotify settings and conservative vinyl-track matching surface. */
+.dw45-spotify-settings{border:1px solid var(--b2,#432912);border-radius:8px;padding:17px;margin-top:22px;background:#1b140c}
+.dw45-spotify-settings h3{font-family:'Cormorant Garamond',serif;font-size:1.36rem;color:#f3d18d;font-weight:600}
+.dw45-spotify-settings p{font-size:.72rem;color:#aa8860;line-height:1.6;margin:6px 0 11px}
+.dw45-spotify-settings #dw45SpotifyStatus{font-size:.76rem;color:#e8d2b3;margin-bottom:12px}
+.dw45-spotify-settings button{border:1px solid #8f682f;border-radius:5px;background:#3b2817;color:#f1d7a6;font:500 .74rem 'Jost',sans-serif;padding:9px 13px;cursor:pointer}
+.dw45-spotify-settings button:hover{background:#65421c}
+.dw45-match-overlay{position:fixed;inset:0;z-index:15000;display:grid;place-items:center;padding:18px;background:rgba(5,4,3,.94);backdrop-filter:blur(12px)}
+.dw45-match-modal{background:#171108;border:1px solid #7c5a26;border-radius:13px;width:min(780px,100%);max-height:min(83vh,830px);overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 90px #000;font-family:'Jost',sans-serif;color:#f4ead2}
+.dw45-match-modal header{display:flex;justify-content:space-between;gap:12px;padding:21px 24px 14px;border-bottom:1px solid #372514}
+.dw45-match-modal header small{color:#cd9b49;letter-spacing:.2em;font-size:.56rem}
+.dw45-match-modal header h2{font-family:'Cormorant Garamond',serif;font-size:1.8rem;margin:5px 0}
+.dw45-match-modal header p{font-size:.73rem;color:#a98c69;line-height:1.5}
+.dw45-match-modal header>button{flex:none;align-self:flex-start;border:1px solid #513a23;background:transparent;color:#dcc194;border-radius:50%;width:26px;height:26px;cursor:pointer}
+.dw45-match-rows{overflow:auto;min-height:100px;padding:9px 24px}
+.dw45-match-row{display:grid;grid-template-columns:minmax(120px,1fr) minmax(150px,1.65fr);gap:6px 16px;padding:11px 0;border-bottom:1px solid #302315;align-items:center}
+.dw45-match-physical{display:flex;gap:10px;align-items:baseline;min-width:0;font-size:.74rem}
+.dw45-match-physical b{color:#d8aa5e}.dw45-match-physical span{overflow:hidden;text-overflow:ellipsis}
+.dw45-match-row select,.dw45-match-row input{width:100%;min-width:0;background:#231a10;color:#f1e4c9;border:1px solid #614728;border-radius:4px;padding:7px;font-size:.7rem;font-family:'Jost',sans-serif}
+.dw45-match-search{grid-column:2;display:flex;gap:6px}.dw45-match-search button{background:#352415;color:#dbb67a;border:1px solid #6e4b28;padding:5px 10px;border-radius:4px;cursor:pointer}
+.dw45-match-modal footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 24px;border-top:1px solid #372514}
+.dw45-match-modal footer span{font-size:.68rem;color:#b09570}.dw45-match-modal footer button{font:500 .7rem 'Jost',sans-serif;border:1px solid #9f722f;border-radius:5px;background:#573518;color:#ffe0a2;padding:10px 13px;cursor:pointer}
+.dw45-match-modal footer button:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:550px){.dw45-match-modal header{padding:13px}.dw45-match-rows{padding:8px 13px}.dw45-match-row{grid-template-columns:1fr}.dw45-match-search{grid-column:1}.dw45-match-modal footer{padding:10px 13px;flex-direction:column;align-items:stretch}.dw45-match-modal footer button{width:100%}}

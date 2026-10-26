@@ -1,0 +1,125 @@
+/* Dead Wax v44.1 · floating, skeuomorphic Digital Turntable
+   Additive only. The existing v43 stylesheet and app remain unchanged. */
+.dw44-icon{display:block;width:16px;height:16px;flex:0 0 auto}
+.dw44-panel[hidden],.dw44-dock[hidden],.dw44-detail-status[hidden]{display:none!important}
+.dw44-premium{font-size:.51rem;letter-spacing:.11em;text-transform:uppercase;color:#c5a16b;white-space:nowrap}
+/* The original physical vinyl tracklist remains visible and unchanged. */
+#mTlC .m-tl-side-lbl{display:flex;align-items:center;justify-content:space-between;gap:.6rem;min-height:29px}
+.dw44-play-side{margin-left:auto;flex:0 0 auto;border:1px solid rgba(208,154,36,.49);background:#24190d;color:var(--gold,#d09a24);border-radius:4px;padding:.31rem .63rem;cursor:pointer;font-size:.62rem;font-family:'Jost',sans-serif;font-weight:500;letter-spacing:0;text-transform:none;transition:background .15s,border-color .15s}
+.dw44-play-side:hover,.dw44-play-side:focus-visible{background:#382710;border-color:var(--gold,#d09a24)}
+.dw44-panel{margin:.35rem 0 .6rem;font-family:'Jost',sans-serif;color:var(--cream,#f4ead2)}
+.dw44-detail-strip{display:flex;align-items:center;gap:9px;padding:.57rem .7rem;background:#21180d;border:1px solid #63451e;border-radius:5px}
+.dw44-detail-strip>div{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}
+.dw44-detail-strip strong{color:#d09a24;font-weight:500;letter-spacing:.07em;font-size:.59rem}
+.dw44-detail-strip div span{color:#baa486;font-size:.65rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dw44-detail-strip button{display:flex;align-items:center;gap:5px;background:transparent;border:0;font-family:'Jost',sans-serif;font-size:.6rem;color:#d09a24;cursor:pointer;white-space:nowrap}
+.dw44-detail-strip button svg{width:12px;height:12px}
+.dw44-detail-status{display:inline-flex;align-items:center;gap:7px;align-self:flex-start;margin-top:.58rem;border:1px solid #64471e;background:#1c140a;border-radius:5px;padding:.4rem .57rem;color:#d09a24;font-family:'Jost',sans-serif;font-size:.58rem;letter-spacing:.075em;cursor:pointer}
+.dw44-detail-status:hover{border-color:#d09a24}
+.dw44-detail-chevron{font-size:.85rem;padding-left:2px}
+#mTlC .m-tl-track.dw44-current-row{background:linear-gradient(90deg,rgba(208,154,36,.14),transparent);border-left:2px solid #c18d23;padding-left:.3rem;margin-left:-.36rem;border-radius:2px}
+#mTlC .m-tl-track.dw44-current-row .m-tl-name,#mTlC .m-tl-track.dw44-current-row .m-tl-pos{color:#f1c563}
+/* Active record in Grid / List / Cover Flow / search results; never conflated with physical 'Listened'. */
+.dw44-record-badge{display:inline-flex;align-items:center;justify-content:center;gap:4px;font-family:'Jost',sans-serif;font-size:.49rem!important;font-weight:600;line-height:1.2;letter-spacing:.085em;text-transform:uppercase;white-space:nowrap;background:rgba(19,13,6,.96);color:#dbc084;border:1px solid rgba(208,154,36,.65);border-radius:3px;padding:5px 7px;box-shadow:0 2px 12px rgba(0,0,0,.35);pointer-events:none;z-index:10}
+.dw44-record-badge::before,.dw44-status-light{content:'';display:inline-block;flex:none;width:6px;height:6px;background:#a17c39;border-radius:50%;box-shadow:0 0 0 2px rgba(208,154,36,.1)}
+.dw44-record-badge.dw44-is-playing::before,.dw44-status-light.is-on{background:#edb941;box-shadow:0 0 6px rgba(237,185,65,.75)}
+#gridWrap .dw44-active-record .card-cover,#cfStage .dw44-active-record .card-cover{box-shadow:inset 0 0 0 2px rgba(208,154,36,.72)}
+#gridWrap .card-cover,#cfStage .card-cover{position:relative}
+#gridWrap .card-cover>.dw44-record-badge,#cfStage .card-cover>.dw44-record-badge{position:absolute;left:7px;top:7px;max-width:calc(100% - 14px)}
+#listBody .dw44-active-record{box-shadow:inset 3px 0 0 #d09a24;background:rgba(208,154,36,.065)}
+#listBody .c-art>.dw44-record-badge,#cfMeta .flow-meta-code>.dw44-record-badge,#sf .sf-txt>.dw44-record-badge{margin-left:.45rem;vertical-align:middle;font-size:.43rem!important;padding:3px 5px}
+#cfMeta .dw44-record-badge{letter-spacing:.055em}
+/* Floating window: sits above the collection AND the record detail modal.
+   Does not add page padding or change original layout. */
+.dw44-dock{position:fixed;right:22px;bottom:20px;z-index:10050;width:min(378px,calc(100vw - 28px));color:#f4ead2;font-family:'Jost',sans-serif;box-shadow:0 25px 75px rgba(0,0,0,.7),0 0 0 1px rgba(239,197,116,.07);border:1px solid #694c25;border-radius:12px;background:linear-gradient(145deg,#22180e 0%,#100c08 60%,#17100a 100%);overflow:hidden;isolation:isolate}
+.dw44-dock:focus-within{outline:1px solid rgba(208,154,36,.52);outline-offset:2px}
+.dw44-dock-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 13px 10px;border-bottom:1px solid #422c13;background:linear-gradient(#2a1c0f,#1a120a)}
+.dw44-dock-brand{display:flex;align-items:center;gap:9px;min-width:0;flex-wrap:wrap}
+.dw44-eyebrow{font-size:.64rem;font-weight:600;letter-spacing:.17em;color:#f0c15a;white-space:nowrap}
+.dw44-eyebrow i{font-style:normal;color:#816031}
+.dw44-minimize{width:26px;height:24px;display:grid;place-items:center;flex:none;color:#a58b68;background:rgba(0,0,0,.25);border:1px solid #4b351b;border-radius:5px;cursor:pointer}
+.dw44-minimize:hover{color:#f0c15a;border-color:#b38940}
+/* Little turntable deck, drawn entirely in CSS: no extra image assets. */
+.dw44-deck{padding:12px 13px 4px;position:relative}
+.dw44-deck-inset{position:relative;height:162px;overflow:hidden;border-radius:8px;border:2px solid #65421e;background:repeating-linear-gradient(175deg,rgba(184,108,42,.018) 0 3px,rgba(0,0,0,.03) 4px 8px),linear-gradient(140deg,#48270f 0%,#241508 45%,#331c0d 88%,#160e08 100%);box-shadow:inset 0 1px 2px rgba(247,194,96,.35),inset 0 -5px 12px rgba(0,0,0,.6),0 3px 9px rgba(0,0,0,.4)}
+.dw44-deck-inset::after{content:'';position:absolute;inset:6px;border:1px solid rgba(233,189,110,.11);border-radius:5px;pointer-events:none}
+.dw44-platter-rim{position:absolute;left:13px;top:8px;width:145px;height:145px;border-radius:50%;padding:7px;background:radial-gradient(circle at 36% 32%,#b9b2a2,#554b40 58%,#201b15 78%,#867665 90%,#211a13 98%);box-shadow:0 6px 10px rgba(0,0,0,.6),inset 0 0 0 2px #2e271f}
+.dw44-platter{position:relative;display:grid;place-items:center;width:100%;height:100%;border-radius:50%;background:repeating-radial-gradient(circle at center,#0d0d0d 0 2px,#171716 3px,#0d0d0c 4px,#22201e 5px);box-shadow:inset 0 0 0 2px #101010,inset 0 0 0 4px #44403a}
+.dw44-platter.is-spinning{animation:dw44-spin 2.05s linear infinite}
+.dw44-record-grooves{position:absolute;inset:9px;border:1px solid rgba(180,173,140,.11);border-radius:50%;background:repeating-radial-gradient(circle,transparent 0 5px,rgba(214,190,124,.09) 6px,transparent 7px)}
+.dw44-center-label{position:relative;z-index:1;width:58px;height:58px;display:grid;place-items:center;border-radius:50%;background:radial-gradient(circle,#dfb55a,#8e561b);border:2px solid #b38a3e;overflow:hidden;box-shadow:0 0 0 2px #1e1812;color:#120e09}
+.dw44-center-label .dw44-art,.dw44-mini-disc .dw44-art{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+.dw44-center-label .dw44-cover-placeholder{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600;color:#211308}
+.dw44-spindle{position:absolute;z-index:2;left:50%;top:50%;transform:translate(-50%,-50%);width:6px;height:6px;border-radius:50%;background:#d8d3c8;border:1px solid #6b6760;box-shadow:0 1px 2px #000}
+/* The needle is a single articulated assembly on a pivot ABOVE the platter.
+   The stylus lands on the outer playable grooves at x≈133, y≈77 in deck units.
+   Lift leaves it over the record; Stop parks it completely outside the LP. */
+.dw44-tonearm{position:absolute;inset:0;z-index:8;pointer-events:none;overflow:visible}
+.dw44-arm-swing{position:absolute;inset:0;transform-origin:82.85% 17.9%;transform:rotate(-36deg);transition:transform .87s cubic-bezier(.2,.64,.17,1);filter:drop-shadow(0 3px 2px rgba(0,0,0,.72))}
+.dw44-tonearm.is-lowered .dw44-arm-swing{transform:rotate(var(--dw44-track-angle,0deg))}
+.dw44-tonearm.is-lifted .dw44-arm-swing{transform:rotate(var(--dw44-track-angle,0deg)) translateY(-5px);filter:drop-shadow(0 8px 4px rgba(0,0,0,.8))}
+.dw44-tonearm.is-parked .dw44-arm-swing{transform:rotate(-36deg)}
+.dw44-arm-art{display:block;width:100%;height:100%;overflow:visible}
+.dw44-arm-art .dw44-stylus{transition:opacity .17s ease .44s,transform .23s ease .44s;transform:translateY(0)}
+.dw44-tonearm.is-lifted .dw44-stylus,.dw44-tonearm.is-parked .dw44-stylus{transform:translateY(-3px);opacity:.68;transition-delay:0s}
+.dw44-arm-pivot{position:absolute;left:calc(82.85% - 15px);top:calc(17.9% - 15px);width:30px;height:30px;border-radius:50%;z-index:3;background:radial-gradient(circle at 34% 31%,#d5c9ae 0 12%,#605a51 23%,#201d19 37%,#938575 57%,#28221b 75%,#8b7a66 90%);border:1px solid #d1b991;box-shadow:inset 0 0 0 2px rgba(0,0,0,.42),0 2px 6px rgba(0,0,0,.85)}
+.dw44-arm-pivot::after{content:'';position:absolute;inset:10px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#d4c6ab,#5f5344);border:1px solid #342819}
+.dw44-arm-cradle{position:absolute;left:53%;bottom:1px;width:20px;height:10px;border:1px solid #3b2c1b;border-radius:3px 3px 1px 1px;background:linear-gradient(90deg,#342b1f,#a39a85 50%,#31261c);box-shadow:0 3px 3px rgba(0,0,0,.65)}
+.dw44-arm-cradle::before{content:'';position:absolute;left:6px;top:-7px;width:7px;height:9px;border:2px solid #a39a85;border-top:0;border-radius:0 0 5px 5px;box-shadow:0 1px 1px #000}
+.dw44-deck-rpm{position:absolute;right:20px;bottom:20px;font-family:'Jost',sans-serif;font-size:.88rem;font-weight:600;letter-spacing:.02em;color:#bb9659;text-shadow:0 1px 2px #000}
+.dw44-deck-rpm span{font-size:.51rem;letter-spacing:.14em;display:block;color:#987955}
+.dw44-deck-brand{position:absolute;right:19px;top:48px;color:#b08c57;letter-spacing:.17em;font-family:'Cormorant Garamond',serif;font-size:1.1rem}
+.dw44-deck-brand span{color:#6a5030}
+.dw44-deck-led{position:absolute;right:25px;top:88px;width:6px;height:6px;background:#72542b;box-shadow:0 0 0 3px #201608;border-radius:50%}
+.dw44-deck-led.is-on{background:#dd9a42;box-shadow:0 0 9px #f0bb54,0 0 0 3px #201608}
+@keyframes dw44-spin{to{transform:rotate(360deg)}}
+/* Record information and tactile turntable controls. */
+.dw44-dock-info{padding:6px 17px 10px}
+.dw44-dock-titles{min-width:0;display:flex;flex-direction:column;gap:3px}
+.dw44-playing-label{display:flex;align-items:center;gap:6px;font-size:.55rem;letter-spacing:.13em;font-weight:600;color:#d3a445}
+.dw44-side-label{color:#ad8860;letter-spacing:.07em}
+.dw44-dock-titles strong{font-family:'Cormorant Garamond',serif;font-size:1.46rem;font-weight:600;line-height:1.08;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dw44-dock-titles>span:not(.dw44-playing-label){font-size:.66rem;color:#a99171;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dw44-dock-titles .dw44-current-track{color:#ddb86f!important;font-size:.69rem!important;margin-top:3px}
+.dw44-controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;padding:0 13px 12px}
+.dw44-control{display:flex;align-items:center;flex-direction:column;justify-content:center;gap:5px;min-width:0;min-height:55px;padding:7px 3px;border-radius:6px;border:1px solid #66503a;background:linear-gradient(160deg,#443323,#1f1710 72%);box-shadow:inset 0 1px 0 rgba(255,229,176,.18),0 3px 2px rgba(0,0,0,.5);color:#e4d5b7;cursor:pointer;font-family:'Jost',sans-serif;transition:background .15s,border-color .15s}
+.dw44-control svg{color:#ecbc61}
+.dw44-control span{font-size:.54rem;line-height:1.2;white-space:normal;text-align:center}
+.dw44-control:hover:not(:disabled),.dw44-control:focus-visible{border-color:#d09a24;background:#48321b}
+.dw44-control:active:not(:disabled){box-shadow:inset 0 2px 5px rgba(0,0,0,.65);transform:translateY(1px)}
+.dw44-control:disabled{opacity:.35;cursor:not-allowed}
+.dw44-dock-foot{display:flex;justify-content:space-between;padding:7px 14px 9px;border-top:1px solid #372715;font-size:.48rem;letter-spacing:.13em;color:#806b51}
+/* Collapsed: an unobtrusive launcher always visible on collection or detail. */
+.dw44-dock.dw44-is-minimized{width:min(312px,calc(100vw - 28px))}
+.dw44-mini{width:100%;display:flex;align-items:center;gap:11px;padding:10px 12px;background:transparent;border:0;text-align:left;color:inherit;font-family:'Jost',sans-serif;cursor:pointer}
+.dw44-mini:hover{background:rgba(208,154,36,.07)}
+.dw44-mini-disc{position:relative;display:grid;place-items:center;flex:none;width:45px;height:45px;padding:10px;border-radius:50%;overflow:hidden;border:2px solid #6d603f;background:repeating-radial-gradient(circle,#111 0 3px,#28231c 4px,#111 5px);box-shadow:inset 0 0 0 2px #090909}
+.dw44-mini-disc .dw44-art,.dw44-mini-disc .dw44-cover-placeholder{width:24px;height:24px;display:grid;place-items:center;font-size:.7rem;color:#d9a849;background:#67431d;border-radius:50%}
+.dw44-mini-disc.is-spinning{animation:dw44-spin 2.05s linear infinite}
+.dw44-mini-copy{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}
+.dw44-mini-copy small{color:#d9a849;font-size:.5rem;letter-spacing:.12em;font-weight:600}
+.dw44-mini-copy strong{font-family:'Cormorant Garamond',serif;font-size:1.09rem;font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.dw44-mini-copy>span{color:#baa17c;font-size:.56rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.dw44-mini-chevron{color:#f1c26c;font-size:1.45rem}
+/* Editing and settings retain clear focus. */
+body:has(.f-ov.on) .dw44-dock,body:has(.s-ov.on) .dw44-dock{visibility:hidden;pointer-events:none}
+@media(max-width:680px){.dw44-dock{right:10px;bottom:max(10px,env(safe-area-inset-bottom));width:min(354px,calc(100vw - 20px))}.dw44-dock.dw44-is-minimized{width:min(300px,calc(100vw - 20px))}.dw44-dock-head{padding:9px 11px}.dw44-deck-inset{height:145px}.dw44-platter-rim{height:130px;width:130px;left:12px;top:6px}.dw44-dock-titles strong{font-size:1.32rem}.dw44-deck-brand{right:16px;top:43px}.dw44-deck-rpm{right:17px;bottom:17px}}
+@media(max-width:370px){.dw44-dock{right:7px;width:calc(100vw - 14px)}.dw44-eyebrow{font-size:.56rem}.dw44-premium{font-size:.44rem}.dw44-control span{font-size:.49rem}.dw44-dock-brand{gap:5px}.dw44-deck-inset{height:137px}}
+@media(prefers-reduced-motion:reduce){.dw44-platter.is-spinning,.dw44-mini-disc.is-spinning{animation:none}.dw44-arm-swing,.dw44-arm-art .dw44-stylus,.dw44-control{transition:none}}
+
+#listBody .c-art>.dw44-record-badge{margin-left:.65rem;font-family:'Jost',sans-serif;flex:none;font-weight:600}
+#sf .sf-txt>.dw44-record-badge{align-self:flex-start;margin-left:0;margin-top:2px}
+
+
+/* v44.3: one concentric record groove band per physical vinyl track. */
+.dw44-groove-map{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;overflow:visible;pointer-events:none;z-index:1}
+.dw44-groove-band{stroke:#38342d;opacity:1;transition:stroke .36s,stroke-opacity .36s;stroke-opacity:1}
+.dw44-groove-band:nth-child(4n + 1){stroke:#22211f}
+.dw44-groove-band.is-current{stroke:#504331;stroke-opacity:1}
+.dw44-groove-boundary{stroke:rgba(203,180,133,.54);stroke-width:.52;opacity:.92}
+.dw44-groove-scratch{stroke:#c9b785;stroke-width:.31;stroke-linecap:round;fill:none;opacity:.5}
+.dw44-deck.is-playing .dw44-groove-scratch{animation:dw44-groove-flutter 7.1s steps(1,end) infinite;animation-delay:var(--dw44-scratch-delay,0s)}
+@keyframes dw44-groove-flutter{0%,7%,11%,24%,43%,50%,71%,75%,90%,100%{opacity:.21}8%,25%,72%{opacity:.62}49%,91%{opacity:.42}}
+.dw44-track-total{position:absolute;right:75px;top:108px;font-size:.49rem;font-weight:600;letter-spacing:.06em;text-align:right;color:#caa873;text-shadow:0 1px 3px #000;white-space:nowrap}
+@media(max-width:680px){.dw44-track-total{right:70px;top:99px;font-size:.47rem}}
+@media(prefers-reduced-motion:reduce){.dw44-deck.is-playing .dw44-groove-scratch{animation:none}}
