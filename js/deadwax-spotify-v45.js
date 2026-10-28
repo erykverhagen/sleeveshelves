@@ -6,7 +6,9 @@
 (() => {
   'use strict';
   const CLIENT_ID='fc0940a0a57440c3b510d779180d1ab9';
-  const REDIRECT='https://erykverhagen.github.io/test/spotify-callback.html';
+  // Resolve the Spotify OAuth callback from this deployed script's location,
+  // so GitHub Pages repo renames and preview paths do not leave a stale URL.
+  const REDIRECT=new URL('../spotify-callback.html', document.currentScript?.src || location.href).href;
   const AUTH='https://accounts.spotify.com/authorize';
   const TOKEN='https://accounts.spotify.com/api/token';
   const API='https://api.spotify.com/v1';
