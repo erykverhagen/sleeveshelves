@@ -40,6 +40,7 @@
   let initialized = false;
   let operationId = 0;
   let sleeveFlipped = false;
+  let stageWasActive = false;
   let pendingTrackIndex = null;
   // Hover/drag preview is UI-only until the stylus is released. Spotify is never
   // instructed to seek while the stylus is in motion.
@@ -121,6 +122,8 @@
       record: session.record.key,
       album: session.record.album,
       artist: session.record.artist,
+      cover: session.record.cover || '',
+      shelfId: session.record.shelfId || '',
       side: session.side,
       status: session.status,
       trackIndex: session.trackIndex,
@@ -234,7 +237,7 @@
       if(Number.isFinite(event.seconds))session.elapsed=Math.max(0,event.seconds);
       if(Number.isFinite(event.duration))session.providerTrackDuration=Math.max(0,event.duration);
       const deck=dock && $('.dw44-deck',dock);
-      if(deck)deck.style.setProperty('--dw44-track-angle',`${(groovePosition()*12).toFixed(3)}deg`);
+      if(deck)deck.style.setProperty('--dw44-track-angle',armAngleAt(groovePosition()));
     } else if(event.kind==='finished') {
       if(session.status==='stopped'||session.status==='finished')return;
       session.status='finished';session.elapsed=0;
@@ -251,7 +254,7 @@
     session.elapsed += dt;
     if (session.elapsed < FEATURE.demoSecondsPerTrack) {
       const deck = dock && $('.dw44-deck', dock);
-      if (deck) deck.style.setProperty('--dw44-track-angle', `${(groovePosition()*12).toFixed(3)}deg`);
+      if (deck) deck.style.setProperty('--dw44-track-angle', armAngleAt(groovePosition()));
       return;
     }
     session.elapsed = 0;
@@ -283,12 +286,13 @@
   }
   function controls() {
     if (!session) return '';
-    return [
-      button('needle', primaryLabel(), session.status==='playing'?'needle':'play'),
-      button('stop', 'Stop / reset', 'stop'),
-      button('turn', 'Turn record', 'turn', !siblingSide(session.record.sides, session.side)),
-      button('swap', 'Swap record', 'swap')
+    // Collector-first: the tracklist already owns side selection and play.
+    // The deck only needs the physical needle and stop/park controls.
+    const core = [
+      button('needle', primaryLabel(), session.status==='playing'?'pause':'play'),
+      button('stop', 'Stop and return record to sleeve', 'stop')
     ].join('');
+    return matchingDetail() ? `<div class="ss-v50-transport-left">${core}</div>` : core;
   }
   function coverMarkup(record) {
     if (!record?.cover || !/^(https?:\/\/|data:image\/)/i.test(record.cover)) return `<div class="dw44-cover-placeholder">DW</div>`;
@@ -303,6 +307,27 @@
     dock.setAttribute('aria-live', 'off');
     dock.hidden = true;
     document.body.appendChild(dock);
+  }
+  function activeForSelectedRecord() {
+    // The large platter replaces the sleeve only while actively cued or playing.
+    // Stopped and end-of-side return to the physical sleeve, not a parked widget.
+    return !!(session && ['loading','playing','paused'].includes(session.status) && matchingDetail());
+  }
+  function dockHost() {
+    // V50: the turntable replaces the sleeve ONLY for the selected record
+    // while the virtual needle session is active. Otherwise show its sleeve.
+    return activeForSelectedRecord() && $('#ssTurntableStage')
+      ? $('#ssTurntableStage') : document.body;
+  }
+  function placeDock() {
+    if (!dock) return;
+    const host = dockHost();
+    if (dock.parentElement !== host) host.appendChild(dock);
+    const embedded = host.id === 'ssTurntableStage';
+    dock.classList.toggle('dw44-is-embedded', embedded);
+    dock.classList.toggle('dw44-is-floating', !embedded);
+    dock.setAttribute('aria-label', embedded ? 'Record turntable in detail panel' : 'Digital Turntable compact listening status');
+    if (embedded) expanded = true;
   }
   function statusName() {
     if (!session) return '';
@@ -350,6 +375,12 @@
     }
     const band=grooves[i];
     return Math.min(1,Math.max(0,band.start + (band.end-band.start)*fraction));
+  }
+  // Calibrated to the V52 photographed arm and its top-right pivot.
+  // The stylus begins on the outer lead-in and sweeps inward as the LP plays.
+  function armAngleAt(progress) {
+    const p=Math.max(0,Math.min(1,Number(progress)||0));
+    return `${(-13+20*p).toFixed(3)}deg`;
   }
   function grooveSignature() {
     return `${session.side}|${session.tracks.map(t=>t.position+':'+t.duration).join('|')}`;
@@ -415,7 +446,7 @@
     // The real vinyl spiral leads inward as the track progresses. At the inner
     // Physically proportioned swing from the outer lead-in band to the inner run-out.
     const visualProgress=cuePreviewIndex===null?groovePosition():trackGrooves()[cuePreviewIndex].start+.07*(trackGrooves()[cuePreviewIndex].end-trackGrooves()[cuePreviewIndex].start);
-    deck.style.setProperty('--dw44-track-angle', `${(visualProgress*12).toFixed(3)}deg`);
+    deck.style.setProperty('--dw44-track-angle', armAngleAt(visualProgress));
     const arm = $('.dw44-tonearm', deck);
     if (arm) {
       arm.classList.remove('is-lowered', 'is-lifted', 'is-parked');
@@ -429,33 +460,22 @@
   }
   function turntableMarkup() {
     const spinning = session.status === 'playing';
-    return `<div class="dw44-deck ${spinning?'is-playing':'is-idle'}" role="img" aria-label="Vintage turntable">
+    return `<div class="dw44-deck ${spinning?'is-playing':'is-idle'}" role="group" tabindex="0" aria-label="Turntable. Use left and right arrow keys to lift and cue the needle to a different track groove. Drop the needle to play.">
       <div class="dw44-deck-inset">
         <div class="dw44-platter-rim"><div class="dw44-platter ${spinning?'is-spinning':''}">
           <div class="dw44-record-grooves"></div>
           ${recordGroovesMarkup()}
-          <div class="dw44-center-label">${coverMarkup(session.record)}</div>
+          <div class="dw44-center-label" aria-label="Album cover label: ${escapeHtml(session.record.album)}">${coverMarkup(session.record)}</div>
           <div class="dw44-spindle"></div>
         </div></div>
+        <div class="ss53-vinyl-light" aria-hidden="true"></div>
+        <div class="ss53-lamp" aria-hidden="true"><span class="ss53-lamp-lens"></span></div>
+        <div class="ss53-engraving" aria-hidden="true">SLEEVESHELVES <span>33⅓ RPM</span></div>
         <div class="dw44-tonearm ${needlePosition()}">
           <div class="dw44-arm-swing">
-            <svg class="dw44-arm-art" viewBox="0 0 350 140" preserveAspectRatio="none" aria-hidden="true">
-              <defs>
-                <linearGradient id="dw44-arm-chrome" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stop-color="#fff0ce"/><stop offset="25%" stop-color="#9b958a"/>
-                  <stop offset="57%" stop-color="#ece5d6"/><stop offset="100%" stop-color="#504b43"/>
-                </linearGradient>
-                <linearGradient id="dw44-head-chrome" x1="0%" y1="0%" x2="100%" y2="90%">
-                  <stop offset="0%" stop-color="#a9a59a"/><stop offset="60%" stop-color="#3b3834"/><stop offset="100%" stop-color="#797063"/>
-                </linearGradient>
-              </defs>
-              <path d="M230 15 L217 25 C204 29 202 28 189 39 L142 77 L138 82" fill="none" stroke="rgba(0,0,0,.63)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" transform="translate(2 3)"/>
-              <path d="M230 15 L217 25 C204 29 202 28 189 39 L142 77 L138 82" fill="none" stroke="url(#dw44-arm-chrome)" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M206 27 L143 77" fill="none" stroke="rgba(255,247,225,.5)" stroke-width="1" stroke-linecap="round"/>
-              <path d="M133 77 L143 74 L150 83 L137 91 Z" fill="url(#dw44-head-chrome)" stroke="#c4b9a4" stroke-width=".9"/>
-              <path d="M138 88 L132 87" stroke="#c7b69d" stroke-width="1.4" stroke-linecap="round" class="dw44-stylus"/>
-              <circle cx="132" cy="87" r="1.25" fill="#f5dba4" class="dw44-stylus"/>
-              <circle cx="132" cy="87" r="13" fill="transparent" class="dw45-stylus-grip"><title>Drag the needle to a groove</title></circle>
+            <img class="ss52-reference-tonearm" src="assets/sleeveshelves-reference-arm.png" alt="" draggable="false" aria-hidden="true">
+            <svg class="ss52-arm-cue-layer" viewBox="0 0 212 283" preserveAspectRatio="xMidYMid meet" aria-label="Cue the tonearm">
+              <circle cx="21" cy="252" r="17" fill="transparent" class="dw45-stylus-grip" tabindex="0" focusable="true" role="slider" aria-label="Drag the tonearm over a groove and release to play, or use arrow keys to cue" aria-valuemin="1" aria-valuemax="${session.tracks.length}" aria-valuenow="${session.trackIndex+1}"><title>Drag the stylus to a groove</title></circle>
             </svg>
           </div>
           <span class="dw44-arm-pivot"></span>
@@ -466,13 +486,60 @@
         <div class="dw44-track-total">${session.tracks.length} TRACK${session.tracks.length===1?'':'S'} · SIDE ${escapeHtml(session.side)}</div>
         <div class="dw44-deck-led ${spinning?'is-on':''}"></div>
       </div>
-        <div class="dw45-cue-preview" id="dw45CuePreview" hidden aria-live="polite">
-          <small class="dw45-cue-kicker">CUE <span class="dw45-cue-direction"></span></small>
-          <strong class="dw45-cue-position"></strong>
-          <span class="dw45-cue-title"></span>
-          <small class="dw45-cue-hint">RELEASE · DROP TO PLAY</small>
-        </div>
     </div>`;
+  }
+  function renderStagePreview() {
+    const stage=$('#ssTurntableStage');
+    const preview=$('#ssTurntablePreview');
+    if (!stage || !preview) return;
+    const shown=$('#detOv')?.classList.contains('on');
+    stage.hidden=!shown;
+    if (!shown) { preview.hidden=true; stageWasActive=false; return; }
+    const active=activeForSelectedRecord();
+    const wasActive=stageWasActive;
+    stageWasActive=active;
+    stage.classList.toggle('ss-is-playing',active);
+    if (active && !wasActive) {
+      // Physical ritual: the existing sleeve lifts/slides away to reveal the
+      // loaded LP. The album image is reused from the original preview.
+      const sleeve=preview.querySelector('.ss-v50-sleeve-art');
+      stage.querySelector('.ss54-sleeve-fly')?.remove();
+      if (sleeve && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const fly=document.createElement('div');
+        fly.className='ss54-sleeve-fly';
+        fly.setAttribute('aria-hidden','true');
+        fly.append(sleeve.cloneNode(true));
+        stage.append(fly);
+        stage.classList.add('ss54-revealing');
+        const finish=()=>{fly.remove();stage.classList.remove('ss54-revealing');};
+        fly.addEventListener('animationend',finish,{once:true});
+        window.setTimeout(finish,850);
+      }
+    }
+    preview.hidden=active;
+    if (active) return;
+    if (wasActive && !active) {
+      stage.classList.remove('ss54-revealing');
+      stage.querySelector('.ss54-sleeve-fly')?.remove();
+      preview.classList.remove('ss54-sleeve-return');
+      void preview.offsetWidth;
+      preview.classList.add('ss54-sleeve-return');
+    }
+    // The native record detail supplies the artwork; never use a demo/stand-in
+    // image in the shipped app. The sleeve remains visible without a tracklist.
+    const record=tracksFromDetail();
+    const cover=$('#mCover img')?.getAttribute('src') || '';
+    const artist=text('#mArtist'),album=text('#mAlbum');
+    const key=[artist,album,cover,(record?.key||'')].join('|');
+    if (preview.dataset.recordKey===key) return;
+    preview.dataset.recordKey=key;
+    const sides=record?Object.keys(record.sides):[];
+    const canShowCover=/^(https?:\/\/|data:image\/)/i.test(cover);
+    const coverArt=canShowCover?`<img src="${escapeHtml(cover)}" alt="${escapeHtml(album)} album sleeve">`:
+      `<div class="ss-v50-no-cover" aria-label="Album sleeve artwork unavailable"><span>THE RECORD SLEEVE</span><strong>${escapeHtml(album||'Record')}</strong><small>${escapeHtml(artist)}</small></div>`;
+    preview.innerHTML=`<div class="ss-v50-sleeve-media" aria-label="Entire original album sleeve, before using the turntable">
+        <div class="ss-v50-sleeve-art">${coverArt}</div>
+      </div>`;
   }
   function sleeveTrackMarkup() {
     if (!session)return '';
@@ -481,7 +548,7 @@
       const idx=session.record.sides[t.side].findIndex(x=>x.position===t.position);
       const active=t.side===session.side && idx===session.trackIndex;
       const preview=t.side===session.side && idx===cuePreviewIndex;
-      return `<button type="button" class="dw45-sleeve-track ${active?'is-current':''} ${preview?'is-cue-target':''}" data-dw45-track="${idx}" data-dw45-side="${escapeHtml(t.side)}" aria-label="Cue ${escapeHtml(t.position)} ${escapeHtml(t.title)}"><em>${escapeHtml(t.position)}</em><span>${escapeHtml(t.title)}</span></button>`;
+      return `<div class="dw45-sleeve-track ${active?'is-current':''} ${preview?'is-cue-target':''}" aria-label="${escapeHtml(t.position)} ${escapeHtml(t.title)}"><em>${escapeHtml(t.position)}</em><span>${escapeHtml(t.title)}</span></div>`;
     }).join('')}</div>`;
   }
   function sleeveMarkup() {
@@ -496,32 +563,18 @@
     </div>`;
   }
   function updateCuePreview() {
-    if (!dock || !session) return;
-    const panel=$('#dw45CuePreview',dock);
-    if (panel) {
-      panel.hidden=cuePreviewIndex===null;
-      if (cuePreviewIndex!==null) {
-        const track=session.tracks[cuePreviewIndex];
-        const movement=cuePreviewIndex>(cueOriginIndex??session.trackIndex)?'INWARD ↓':cuePreviewIndex<(cueOriginIndex??session.trackIndex)?'OUTWARD ↑':'CURRENT GROOVE';
-        $('.dw45-cue-direction',panel).textContent=movement;
-        $('.dw45-cue-position',panel).textContent=track.position || `TRACK ${cuePreviewIndex+1}`;
-        $('.dw45-cue-title',panel).textContent=track.title || 'Untitled';
-      }
+    // V54: cue selection is shown ONLY in the existing native tracklist.
+    // Never create a second track preview, popover, or status content item.
+    const same=matchingDetail();
+    const selectedPosition=same && session?.tracks?.[cuePreviewIndex ?? session.trackIndex]?.position;
+    for (const row of $$('#mTlC .m-tl-track')) {
+      const isCue=cuePreviewIndex!==null && same && text('.m-tl-pos',row)===selectedPosition;
+      row.classList.toggle('ss54-cue-row',isCue);
+      row.classList.toggle('dw44-current-row',same && !isCue && cuePreviewIndex===null && text('.m-tl-pos',row)===selectedPosition);
+      if(isCue)row.setAttribute('data-ss-cue','true');
+      else row.removeAttribute('data-ss-cue');
     }
-    for (const button of $$('.dw45-sleeve-track',dock)) {
-      const selected=cuePreviewIndex!==null && button.dataset.dw45Side===session.side && Number(button.dataset.dw45Track)===cuePreviewIndex;
-      button.classList.toggle('is-cue-target',selected);
-      if(selected) {
-        const list=button.closest('.dw45-sleeve-list');
-        if(list && sleeveFlipped) {
-          const top=button.offsetTop-list.offsetTop;
-          if(top<list.scrollTop)list.scrollTop=top;
-          else if(top+button.offsetHeight>list.scrollTop+list.clientHeight)list.scrollTop=top+button.offsetHeight-list.clientHeight;
-        }
-      }
-    }
-    const current=$('.dw44-current-track',dock);
-    if(current && cuePreviewIndex!==null) current.textContent=`CUE → ${session.tracks[cuePreviewIndex]?.position||''} · ${session.tracks[cuePreviewIndex]?.title||''}`;
+    for (const band of $$('.dw45-sleeve-track',dock || document))band.classList.remove('is-cue-target');
   }
   function updateSleeve() {
     const sleeve=$('#dw45Sleeve',dock);if(!sleeve)return;
@@ -545,13 +598,35 @@
     if(node?.dataset.id && typeof window.openRecordById==='function')window.openRecordById(node.dataset.id);
     else showPlaybackError('Record is hidden in the current view. Clear filters to open its details.');
   }
+  // Controls are part of the physical deck when embedded, not a second bar
+  // below it. The same native buttons/actions are moved, never duplicated.
+  function positionControls() {
+    if (!dock) return;
+    const controlsNode=$('.dw44-controls',dock);
+    if (!controlsNode) return;
+    const embedded=dock.classList.contains('dw44-is-embedded');
+    const deck=$('.dw44-deck-inset',dock);
+    const desired=embedded && deck ? deck : dock;
+    controlsNode.classList.toggle('ss53-on-deck',embedded);
+    if(controlsNode.parentElement!==desired) {
+      if(embedded)desired.appendChild(controlsNode);
+      else {
+        const foot=$('.dw44-dock-foot',dock);
+        if(foot)foot.before(controlsNode);
+        else desired.appendChild(controlsNode);
+      }
+    }
+  }
   function renderDock() {
     if (!dock) return;
-    dock.hidden = !session;
-    dock.classList.toggle('dw44-is-minimized', !!session && !expanded);
-    dock.classList.toggle('dw44-is-open', !!session && expanded);
+    placeDock();
+    dock.hidden = !session || session.status === 'stopped';
+    const embedded = dock.classList.contains('dw44-is-embedded');
+    if (!embedded) expanded=false;
+    dock.classList.toggle('dw44-is-minimized', !!session && !expanded && !embedded);
+    dock.classList.toggle('dw44-is-open', !!session && (expanded || embedded));
     if (!session) { dock.replaceChildren(); return; }
-    if (!expanded) {
+    if (!expanded && !embedded) {
       cuePreviewIndex=null;cueOriginIndex=null;
       dock.innerHTML = `<button type="button" class="dw44-mini" data-dw44-action="expand" aria-label="Open Digital Turntable" aria-expanded="false">
         <span class="dw44-mini-disc ${session.status==='playing'?'is-spinning':''}">${coverMarkup(session.record)}</span>
@@ -565,12 +640,16 @@
     const priorDeck = $('.dw44-deck', dock);
     const sameRecord = dock.dataset.dw44RecordKey === session.record.key;
     if (priorDeck && sameRecord) {
+      const elsewhere = $('.dw44-premium', dock);
+      if(elsewhere){elsewhere.textContent=matchingDetail()?'':`RETURN TO ${session.record.album}`;}
+      dock.classList.toggle('dw44-other-record',!matchingDetail());
       const statusLine = $('.dw44-playing-label', dock);
       if (statusLine) statusLine.innerHTML = `<span class="dw44-status-light ${session.status==='playing'?'is-on':''}"></span>${escapeHtml(statusName())} <span class="dw44-side-label">· SIDE ${escapeHtml(session.side)}</span>`;
       const currentLine = $('.dw44-current-track', dock);
       if (currentLine) currentLine.textContent = session.status === 'finished' ? 'End of side · Turn the record or drop the needle' : currentTrackTitle();
       const buttons = $('.dw44-controls', dock);
       if (buttons) buttons.innerHTML = controls();
+      positionControls();
       syncDeck(priorDeck);
       updateSleeve();
       const brand=$('.dw44-deck-brand',priorDeck);
@@ -580,7 +659,7 @@
       return;
     }
     dock.innerHTML = `
-      <div class="dw44-dock-head"><div class="dw44-dock-brand"><span class="dw44-eyebrow">DEAD WAX <i>·</i> TURNTABLE</span><span class="dw44-premium">PREMIUM PREVIEW</span></div>
+      <div class="dw44-dock-head"><div class="dw44-dock-brand"><span class="dw44-eyebrow">SLEEVESHELVES <i>·</i> TURNTABLE</span><button type="button" class="dw44-premium" data-dw44-action="openrecord" aria-label="Return to playing record">RETURN TO ${escapeHtml(session.record.album)}</button></div>
         <button type="button" class="dw44-minimize" data-dw44-action="minimize" aria-label="Minimize turntable" title="Minimize turntable" aria-expanded="true"><span class="dw45-minimize-text">MINIMIZE</span>${icon('minimize')}</button></div>
       ${turntableMarkup()}
       ${sleeveMarkup()}
@@ -592,8 +671,10 @@
       </div>
       <div class="dw44-controls">${controls()}</div>
       <div class="dw44-dock-foot"><span>33⅓ RPM · ${session.providerId==='spotify'?'SPOTIFY':'SIMULATED'}</span><span>${session.providerId==='spotify'?'DIGITAL STREAM':'NO AUDIO'}</span></div>`;
+    dock.classList.toggle('dw44-other-record',!matchingDetail());
     dock.dataset.dw44RecordKey = session.record.key;
     const newDeck = $('.dw44-deck', dock);
+    positionControls();
     if (newDeck) {
       syncDeck(newDeck);
       // A new playing record starts with the stylus on its rest. Cue it
@@ -618,33 +699,17 @@
     const el = $('#dw44RecordPanel');
     if (el) {
       el.hidden = !same;
-      if (same) {
-        const line = `${statusName()} · SIDE ${session.side}`;
-        el.innerHTML = `<div class="dw44-detail-strip"><span class="dw44-status-light ${session.status==='playing'?'is-on':''}"></span><div><strong>${escapeHtml(line)}</strong><span>${escapeHtml(currentTrackTitle())}</span></div><button type="button" data-dw44-action="expand" aria-label="Open turntable">Open turntable ${icon('play')}</button></div>`;
-      } else el.replaceChildren();
+      el.classList.toggle('is-active', same);
     }
-    let top = $('#dw44DetailStatus');
-    if (!top) {
-      const chips = $('#mChips');
-      if (chips) {
-        top = document.createElement('button');
-        top.type = 'button';
-        top.id = 'dw44DetailStatus';
-        top.className = 'dw44-detail-status';
-        top.dataset.dw44Action = 'expand';
-        top.setAttribute('aria-label','Show Digital Turntable');
-        chips.insertAdjacentElement('afterend',top);
-      }
-    }
-    if (top) {
-      top.hidden = !same;
-      if (same) top.innerHTML = `<span class="dw44-status-light ${session.status==='playing'?'is-on':''}"></span>${escapeHtml(statusName())} · SIDE ${escapeHtml(session.side)} <span class="dw44-detail-chevron">↗</span>`;
-    }
+    // No duplicate "now playing" card or cue status in the detail pane.
+    $('#dw44DetailStatus')?.remove();
     for (const trackEl of $$('#mTlC .m-tl-track')) {
       const pos = text('.m-tl-pos', trackEl);
       const selected = same && pos === session.tracks[session.trackIndex]?.position;
-      trackEl.classList.toggle('dw44-current-row', !!selected);
-      if (selected) trackEl.setAttribute('aria-current','true');
+      const cue = same && cuePreviewIndex!==null && pos === session.tracks[cuePreviewIndex]?.position;
+      trackEl.classList.toggle('dw44-current-row', !!selected && cuePreviewIndex===null);
+      trackEl.classList.toggle('ss54-cue-row', !!cue);
+      if (selected && cuePreviewIndex===null) trackEl.setAttribute('aria-current','true');
       else trackEl.removeAttribute('aria-current');
     }
   }
@@ -693,7 +758,10 @@
   function render() {
     renderDock();
     modalControls();
+    renderStagePreview();
     scheduleCollectionDecorate();
+    // V57: notify the receiver-style header without coupling it to player DOM.
+    document.dispatchEvent(new CustomEvent('sleeveshelves:playback', {detail:readState()}));
   }
   function decorateDetail() {
     const container = $('#mTlC');
@@ -702,17 +770,8 @@
     const record = tracksFromDetail();
     recordView = record;
     if (!record) { modalControls(); return; }
-    let panel = $('#dw44RecordPanel');
-    if (!panel) {
-      panel = document.createElement('section');
-      panel.id = 'dw44RecordPanel';
-      panel.className = 'dw44-panel';
-      panel.hidden = true;
-      panel.setAttribute('aria-label', 'Digital Turntable Premium Preview');
-      const heading = $('.sec-lbl', parent);
-      if (heading) heading.insertAdjacentElement('afterend', panel);
-      else parent.insertAdjacentElement('afterbegin', panel);
-    }
+    // The stage is a sibling of the original detail region, never a nested
+    // pseudo-player inside the tracklist. Keep the native tracklist unchanged.
     for (const header of $$('.m-tl-side-lbl', container)) {
       const label = (header.getAttribute('data-dw44-side') || header.textContent || '').trim();
       if (header.dataset.dw44Ready === '1' || !record.sides[label]?.length) continue;
@@ -740,17 +799,16 @@
     if(flip){event.preventDefault();sleeveFlipped=!sleeveFlipped;updateSleeve();return;}
     const openCover=event.target.closest('[data-dw45-open-record]');
     if(openCover){event.preventDefault();openPlayingRecord();return;}
+    // SleeveShelves: a tracklist is informational, never an instant digital skip.
     const track=event.target.closest('[data-dw45-track]');
-    if(track){event.preventDefault();const side=track.dataset.dw45Side;
-      if(side!==session?.side){turnToSide(side);}
-      cueTrack(Number(track.dataset.dw45Track));return;
-    }
+    if(track){event.preventDefault();return;}
+    // A click on the vinyl alone does not seek; only a deliberate pointer drag cues.
     const band=event.target.closest('[data-dw44-groove-track]');
-    if(band){event.preventDefault();if(performance.now()<suppressGrooveClickUntil)return;cueTrack(Number(band.dataset.dw44GrooveTrack));return;}
+    if(band){event.preventDefault();return;}
     const button = event.target.closest('[data-dw44-action]');
     if (!button || button.disabled) return;
     event.preventDefault();
-    const map = {needle, stop, turn, swap, minimize: () => {expanded = false; render();}, expand: () => {expanded = true; render();}};
+    const map = {needle, stop, turn, swap, openrecord: openPlayingRecord, minimize: () => {expanded = false; render();}, expand: () => {expanded = true; render();}};
     map[button.dataset.dw44Action]?.();
   }
   function init() {
@@ -759,7 +817,11 @@
     mountDock();
     let needleDrag=null;
     function trackAtPointer(map,x,y) {
-      const rect=map.getBoundingClientRect();
+      // The LP spins. A rotating SVG has an expanded bounding rectangle,
+      // which is NOT a reliable physical coordinate system for needle cueing.
+      // Measure against the stationary platter rim instead.
+      const rim=map.closest('.dw44-platter-rim');
+      const rect=(rim||map).getBoundingClientRect();
       const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
       const r=50*Math.hypot(x-cx,y-cy)/(rect.width/2);
       const grooves=trackGrooves();
@@ -777,14 +839,25 @@
         syncDeck($('.dw44-deck',dock));
       } else updateCuePreview();
     }
+    document.addEventListener('keydown',e=>{
+      if(!session || !e.target.closest?.('.dw45-stylus-grip, .dw44-deck'))return;
+      if(e.key==='Enter'||e.key===' '){e.preventDefault();void needle();return;}
+      if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+      e.preventDefault();
+      const index=e.key==='Home'?0:e.key==='End'?session.tracks.length-1:
+        Math.max(0,Math.min(session.tracks.length-1,session.trackIndex+(e.key==='ArrowRight'?1:-1)));
+      void cueTrack(index);
+    });
     document.addEventListener('pointerdown',e=>{
       const grip=e.target.closest?.('.dw45-stylus-grip');
       const map=grip ? $('#dw44Dock .dw44-groove-map') : e.target.closest?.('.dw44-groove-map');
-      if(!map||!session||session.status==='loading')return;
-      needleDrag={map,id:e.pointerId,x:e.clientX,y:e.clientY,grip:!!grip,moved:false};
+      if(!map||!session||session.status==='loading'||e.button>0)return;
+      // Pause BEFORE cueing. Store the promise so the new track is never
+      // dispatched while a previous Spotify pause is still pending.
+      const wasPlaying=session.status==='playing';
+      const pausePromise=wasPlaying?needle():Promise.resolve();
+      needleDrag={map,id:e.pointerId,x:e.clientX,y:e.clientY,grip:!!grip,moved:false,pausePromise};
       cueOriginIndex=session.trackIndex;
-      // Lift real audio immediately. Do not call Spotify seek until Drop needle.
-      if(session.status==='playing')void needle();
       try{(grip||map).setPointerCapture(e.pointerId);}catch{}
     });
     document.addEventListener('pointermove',e=>{
@@ -798,17 +871,20 @@
     document.addEventListener('pointerup',e=>{
       const drag=needleDrag;needleDrag=null;
       if(!drag||drag.id!==e.pointerId||!session)return;
-      const index=drag.moved ? cuePreviewIndex : (drag.grip ? null : trackAtPointer(drag.map,e.clientX,e.clientY));
+      const index=drag.moved ? cuePreviewIndex : null;
       cuePreviewIndex=null;cueOriginIndex=null;
-      if(index!==null){
-        // Releasing the needle confirms ONE track at its beginning; user must
-        // drop it to play. Never automatically restart digital audio here.
-        suppressGrooveClickUntil=performance.now()+350;
-        void cueTrack(index);
-      } else {
-        const deck=$('.dw44-deck',dock);
-        if(deck)syncDeck(deck);
-      }
+      suppressGrooveClickUntil=performance.now()+350;
+      // A physical release is a DROP, not a digital skip: lift -> cue -> lower.
+      // Await each provider action to avoid Spotify pause/start races.
+      void (async()=>{
+        try {
+          await drag.pausePromise;
+          if (!session || session.status==='stopped' || session.status==='finished')return;
+          if(index!==null && index!==session.trackIndex) await cueTrack(index);
+          else if(index!==null && session.status==='paused' && pendingTrackIndex!==index) await cueTrack(index);
+          if(session && session.status!=='playing' && session.status!=='loading')await needle();
+        } catch(error) {showPlaybackError(error);}
+      })();
     });
     document.addEventListener('pointercancel',e=>{
       if(!needleDrag||needleDrag.id!==e.pointerId)return;
@@ -850,6 +926,8 @@
       showPlaybackError,
       refresh: render,
       cueTrack,
+      toggleNeedle: needle,
+      reopenRecord: openPlayingRecord,
       stop,
       swap,
       expand: () => { expanded = true; render(); },

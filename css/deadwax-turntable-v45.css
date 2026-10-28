@@ -233,3 +233,65 @@ body:has(.f-ov.on) .dw44-dock,body:has(.s-ov.on) .dw44-dock{visibility:hidden;po
 .dw45-cue-title{flex:1;min-width:0;white-space:nowrap;text-overflow:ellipsis;max-height:none;font-size:.56rem}
 .dw45-cue-hint{display:none}
 @media(max-width:680px){.dw45-cue-preview{position:relative;top:auto;right:auto;width:auto}}
+
+
+/* v45.2 · Interaction-sized platter. All original app styling is unchanged.
+   Uniform geometric scaling keeps the needle aligned across desktop and mobile. */
+.dw44-dock{width:min(424px,calc(100vw - 20px))}
+.dw44-deck{padding:10px 11px 4px}
+.dw44-deck-inset{height:auto;aspect-ratio:390 / 194;min-height:0}
+.dw44-platter-rim{left:3.077%;top:3.608%;width:46.154%;height:auto;aspect-ratio:1;padding:1.85%}
+.dw44-center-label{width:39%;height:auto;aspect-ratio:1}
+/* The pivot and stylus are drawn in the same 390 × 194 geometry as the deck.
+   The 0–25° sweep travels from the outer lead-in to the inner band. */
+.dw44-arm-swing{transform-origin:56.923% 8.763%}
+.dw44-tonearm.is-parked .dw44-arm-swing{transform:rotate(-35deg)}
+.dw44-tonearm.is-lowered .dw44-arm-swing{transform:rotate(var(--dw44-track-angle,0deg))}
+.dw44-tonearm.is-lifted .dw44-arm-swing{transform:rotate(var(--dw44-track-angle,0deg)) translateY(-4px)}
+.dw44-arm-pivot{left:calc(56.923% - 14px);top:calc(8.763% - 14px);width:28px;height:28px}
+.dw44-arm-pivot::after{inset:9px}
+.dw44-arm-cradle{left:58%;bottom:2px}
+.dw44-deck-brand{right:16px;top:22px;max-width:116px;font-size:.81rem}
+.dw44-deck-rpm{right:18px;bottom:13px;font-size:.83rem}
+.dw44-deck-led{right:27px;top:57%}
+.dw44-track-total{right:78px;top:71%;font-size:.49rem}
+.dw45-cue-preview{margin-top:6px}
+/* Keep track boundaries legible without turning the vinyl grey. */
+.dw44-groove-boundary{stroke-opacity:.64}
+.dw44-groove-band.is-cue-target{filter:drop-shadow(0 0 1px #e0a64c)}
+@media(max-width:680px){
+  .dw44-dock{right:9px;width:min(424px,calc(100vw - 18px))}
+  .dw44-deck-inset{height:auto;aspect-ratio:390 / 194}
+  .dw44-platter-rim{left:3.077%;top:3.608%;width:46.154%;height:auto;aspect-ratio:1}
+  .dw44-deck-brand{right:12px;top:17px;font-size:.7rem}
+  .dw44-deck-rpm{right:12px;bottom:9px;font-size:.72rem}
+  .dw44-track-total{right:63px;top:71%;font-size:.43rem}
+  .dw44-deck-led{right:19px;top:56%}
+}
+@media(max-width:370px){
+  .dw44-deck-inset{height:auto;aspect-ratio:390 / 194}
+  .dw44-platter-rim{width:46.154%;height:auto;aspect-ratio:1}
+  .dw44-track-total{right:57px;top:71%;font-size:.40rem}
+  .dw44-deck-brand{font-size:.65rem}
+}
+
+
+/* v45.3 · Physically plausible pivoted tonearm over v45.2's larger LP.
+   The arm and cartridge are a single rigid assembly rotating about (268,22)
+   in the 390×194 deck coordinate system. Its stylus starts on the outside
+   (174,123), sweeps to (151,95) on the innermost music groove, and parks in
+   the cradle at approximately (275,160). Scaling is uniform at every width. */
+.dw44-arm-swing {transform-origin:68.71795% 11.34021%}
+.dw44-tonearm.is-lowered .dw44-arm-swing {transform:rotate(var(--dw44-track-angle,0deg))}
+.dw44-tonearm.is-lifted .dw44-arm-swing {transform:rotate(var(--dw44-track-angle,0deg));filter:drop-shadow(0 8px 5px rgba(0,0,0,.87))}
+.dw44-tonearm.is-parked .dw44-arm-swing {transform:rotate(-46deg)}
+.dw44-arm-pivot {left:calc(68.71795% - 14px);top:calc(11.34021% - 14px);width:28px;height:28px}
+.dw44-arm-cradle {left:68.5%;top:82%;bottom:auto;width:22px;height:12px}
+.dw44-deck-brand{right:15px;top:16px}
+/* Grip only the cartridge, not the full deck: click grooves for accessible cueing. */
+.dw44-tonearm .dw45-stylus-grip{pointer-events:all}
+
+/* Keep permanent track count clear of both the playing and parked tonearm. */
+.dw44-track-total{right:15px;top:40%;font-size:.49rem}
+@media(max-width:680px){.dw44-track-total{right:11px;top:40%;font-size:.43rem}}
+@media(max-width:370px){.dw44-track-total{right:10px;top:40%;font-size:.4rem}}

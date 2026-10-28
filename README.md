@@ -1,20 +1,5 @@
-# Dead Wax Supabase Native Exact Static Interface v9
+# SleeveShelves V61.4 | Production build
 
-Supabase-native Dead Wax app using the latest static interface as the visual contract.
+This is the fully packaged website, not a database installer. See **README_V61_4.md** for fixes, deployment, safeguards, and test limitations. The published website uses the configured Supabase project in `supabase-config.js`.
 
-## v9 changes
-
-- Reworked the login/sign-up screen into a full record-player composition.
-- The oversized Dead Wax record/logo sits on the left and runs beyond the viewport edges.
-- The login form is etched into the right-bottom deck surface.
-- Sign in and Sign up are physical speed-style deck buttons.
-- On Sign in, the tonearm moves down toward the record to “start playing.”
-- Shelf ID remains the default group and the first grouping option.
-- No public importer/tools included.
-- No dead_wax_db.js runtime dependency.
-
-Deploy this as the GitHub Pages repo root.
-
-
-## v20
-Stable login patch from working v15: preserves the v15 vinyl treatment, removes the tonearm/rectangle, and aligns intro plus login panel in a clean right column.
+Do not upload this ZIP to a public testing service unless you intend to connect it to your real production Supabase project. Only publish it to the intended production host after backing up and verifying the production SQL migration.

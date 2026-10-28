@@ -1,0 +1,42 @@
+{
+  "name": "SleeveShelves V47 \u00b7 The Listening Room",
+  "built_from": "User-provided Dead Wax V45.3 complete site, via SleeveShelves V46.3 visual branch",
+  "scope": "Desktop-first responsive app redesign; no database schema migration",
+  "modified_files_from_v46_3": [
+    "index.html",
+    "js/sleeveshelves-v46.js",
+    "js/deadwax-turntable-v45.js",
+    "css/sleeveshelves-v47.css",
+    "assets/sleeveshelves-room.svg"
+  ],
+  "loaded_new_visual_stylesheet": "css/sleeveshelves-v47.css",
+  "previous_visual_cascade": "Consolidated into one production CSS file; predecessor stylesheets removed from deployment ZIP",
+  "qa_fixture": "Nonproduction mock records and authorization stub. Does not test live Supabase/Spotify account.",
+  "checks": {
+    "browser_viewports_px": [
+      768,
+      1024,
+      1190,
+      1500,
+      1920
+    ],
+    "js_runtime_exceptions": 0,
+    "preview_parked_deck": true,
+    "panel_embedded_turntable": true,
+    "no_floating_turntable_when_detail_open": true,
+    "minimize_restores_session": true,
+    "keyboard_cue_plus_drop": true,
+    "manual_flip_side": true,
+    "stop_parks_arm": true,
+    "unchanged_native_core": "Core source remains as in prior V46 branch, not independently proven against full V45.3 since integration was added earlier",
+    "live_supabase_write_auth_test": "NOT TESTED",
+    "live_spotify_playback_test": "NOT TESTED"
+  },
+  "sha256": {
+    "index.html": "e56f4fca95076e2754cd7528c391368c6803f2f58e71970d19ecf984d503deba",
+    "js/sleeveshelves-v46.js": "ab8cf319593e3f70bccf6e461ed2f8d5d489ee801999fd74e8eac635e9e983ee",
+    "js/deadwax-turntable-v45.js": "33ea4e2267bee5ae2c399ae633f2c70a9cc20d786cef05cc380d4834dd6df95e",
+    "css/sleeveshelves-v47.css": "f630e5a10701bd669c89a986b97647c45c5c7b63b13dbc97164340468b2337f8",
+    "assets/sleeveshelves-room.svg": "0412328be2c5ec9721635e1bd398cf917f4125156b8acae98502344994b97fad"
+  }
+}

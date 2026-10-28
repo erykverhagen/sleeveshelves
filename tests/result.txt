@@ -1,0 +1,10 @@
+records 1
+init_errors []
+safe_track {'value': 'A1 | </textarea><img src=x onerror=alert(1)> | 3:15', 'unsafe': False}
+failed_save_form_retained True
+successful_save_closes True
+failed_collections_preserve_old {'open': True, 'links': ['jazz']}
+notices ['The save did not fully complete. Check collection assignments before retrying.\nForced save failure', 'The save did not fully complete. Check collection assignments before retrying.\nForced collection failure']
+focus_in_dialog True
+aligned_pluses {'sidebar': True, 'add': True}
+final_errors []
