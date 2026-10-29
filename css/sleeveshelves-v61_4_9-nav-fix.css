@@ -1,0 +1,45 @@
+/* SleeveShelves V61.4.9: sidebar states share one painting model.
+   Override only presentation. No auth, record, player or collection mutation. */
+html body.ss-app-mode #ssApp #ssNav.ss-nav {
+  isolation:isolate!important;
+  overflow:hidden!important;
+  background:linear-gradient(180deg,#2d180e 0%,#221208 48%,#1c0d07 100%)!important;
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+}
+/* Previous release layers painted a gradient after the rail had collapsed. */
+html body.ss-app-mode #ssApp #ssNav.ss-nav::before,
+html body.ss-app-mode #ssApp #ssNav.ss-nav::after {
+  content:none!important;
+  display:none!important;
+  background:none!important;
+  box-shadow:none!important;
+}
+html body.ss-app-mode #ssApp.ss-nav-min #ssNav .ss-nav-collection-title {
+  overflow:hidden!important;
+  width:auto!important;
+  min-width:0!important;
+  margin-inline:2px!important;
+  justify-content:center!important;
+}
+html body.ss-app-mode #ssApp.ss-nav-min #ssNav .ss-nav-collection-title .ss-nav-caption,
+html body.ss-app-mode #ssApp.ss-nav-min #ssNav .ss-other-shelves-title .ss-nav-caption,
+html body.ss-app-mode #ssApp.ss-nav-min #ssNav .ss-other-shelves-empty {
+  display:none!important;
+}
+html body.ss-app-mode #ssApp #ssNav .ss-other-shelves-title {
+  margin-top:22px!important;
+}
+html body.ss-app-mode #ssApp #ssNav .ss-other-shelves-empty {
+  margin:4px 12px 4px;
+  color:#ad9177;
+  font:400 .72rem/1.55 Jost,sans-serif;
+}
+html body.ss-app-mode #ssApp.ss-nav-min #ssNav .ss-other-shelves-title {
+  padding-top:0!important;
+  border-top:0!important;
+  min-height:0!important;
+  margin:12px 0 0!important;
+}
+/* Clear separator, rather than a second decorative bar inside the narrow rail. */
+html body.ss-app-mode #ssApp.ss-nav-min #ssNav .ss-nav-scroll {overflow-x:hidden!important}

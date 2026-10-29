@@ -1,0 +1,29 @@
+SleeveShelves V61.5.0 | Consolidated UX review build
+BASELINE: V61.4.8 + Shelf Affinity V1 + V61.4.9 sidebar review.
+
+IMPLEMENTED IN ONE ADDITIVE LAYER
+1. Detail-to-detail navigation: the modal gains a Back control after opening a related record (including native related tiles and My Shelf Affinity results). Each step returns to the previous record. Closing clears the navigation stack.
+2. Minimize: original working minimize action moved directly beside Close. New down-to-bar icon signals sending playback into the compact receiver. Original playback session handler is retained.
+3. Mini-player: fixed 60px receiver and strictly bounded cover/tuner/control sizes; prevents track, title and controls from creating an oversized browse row. Browse bar stays compact when not playing.
+4. Modal: consistent desktop dialog dimensions (up to 1200x842, within viewport); a fixed square sleeve/turntable region and fixed-height reaction/info slots. Tabs scroll their content independently and do not resize the art.
+5. My Shelf / Other Shelves: retains the existing V61.4.9 navigation section, initially showing No subscriptions yet. Does NOT invent subscriptions or bypass privacy.
+6. Alphabet jump: fixed dock, small reserved empty margin to right of collection cards, and proximity magnification on pointer movement.
+7. Search: existing filter toggle relocated beside search input, with refactored styled filter panel. All native filter handlers and fields preserved.
+8. Removed the redundant standalone Settings button; Settings remains under the user/account menu.
+9. Sidebar: retains the V61.4.9 single-background fix for expanded and collapsed states.
+
+SOURCE CHANGE POLICY
+No Supabase schema or policies changed. No authentication, saves, record mutations, Spotify provider, track-cue engine or related functions were rewritten.
+Only index.html links were added; the two new files are css/sleeveshelves-v61_5-ux.css and js/sleeveshelves-v61_5-ux.js. Existing V61.4.8 and Affinity JS/CSS files remain unchanged.
+
+BROWSER TEST (MOCK ACCOUNT, NO LIVE SUPABASE)
+- 3 sample records loaded, no runtime exceptions.
+- Back navigation: native related card -> another record -> Back returned to original record.
+- Modal at 1500x950: 1200x842; fixed square stage 520x520; reactions/footer fixed regions. Switching tabs preserved stage dimensions.
+- At 1200x900, 780x850, 430x900, stage dimensions remained unchanged when switching tabs.
+- Minimize with an active demo playback session retained the same playing provider/record/track and activated mini-receiver.
+- Search filter panel toggle, header mini geometry, collapsed/expanded sidebar tested.
+
+LIMITATIONS
+Live Supabase and Spotify Premium accounts were not used. Other Shelves subscription management is not implemented; it remains an intentional empty placeholder until server-side invitations and permissions are completed.
+No changes were made to known pre-existing unresolved issues in the original V61.4.8 build beyond the requests above.
