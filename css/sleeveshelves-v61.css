@@ -4161,3 +4161,39 @@ html body.ss-app-mode #ss6147ListenModes button[aria-pressed="true"]{color:#2814
 html body.ss-app-mode #ss6147ListenModes button:focus-visible{outline:2px solid #f2c082;outline-offset:2px}
 html body.ss-app-mode #ss6147ListenStatus{flex:1 0 100%;margin:4px 0 0;color:#d5aa79;font:400 10px/1.4 Jost,sans-serif;min-height:0}
 html body.ss-app-mode #ssApp.ss-nav-min #ss6147ListenModes{display:none!important}
+
+
+/* V61.4.8: Keep the entire sleeve, physical actions and metadata in the
+   existing fixed-height modal; never hide the reactions below the fold. */
+@media (min-width:781px){
+  html body.ss-app-mode.ss56-modal-app #ssDetail #detModal .ss56-visual{
+    gap:11px!important;padding:16px 21px 13px 23px!important;
+    overscroll-behavior:contain;
+  }
+  html body.ss-app-mode.ss56-modal-app #ssDetail #detModal #ssTurntableStage{
+    box-sizing:border-box!important;
+    width:min(100%,390px,clamp(248px,calc(100dvh - 375px),390px))!important;
+    max-width:100%!important;align-self:center!important;margin:0 auto!important;
+  }
+  html body.ss-app-mode.ss56-modal-app #ssDetail #detModal .ss58-reactions{
+    padding:0 0 3px!important;
+  }
+}
+/* Show the native vinyl listen state, not a second database-owned diary. */
+html body.ss-app-mode #ssDetail #ss6148VinylHistory{
+  margin-top:2px;padding:16px;border:1px solid rgba(231,181,106,.20);border-radius:12px;
+  background:rgba(50,30,19,.36);
+}
+html body.ss-app-mode #ssDetail #ss6148VinylHistory h3{
+  display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;margin:0 0 11px;
+  color:#f1d4ae;font:600 18px/1.3 'Cormorant Garamond',Georgia,serif;
+}
+html body.ss-app-mode #ssDetail #ss6148VinylHistory h3 span{
+  font:700 9px/1.2 Jost,sans-serif;letter-spacing:.14em;color:#efb56f;
+}
+html body.ss-app-mode #ssDetail .ss6148-vinyl-status{display:flex;align-items:center;gap:9px;margin-bottom:5px;color:#f2d8ba;font:500 13px/1.5 Jost,sans-serif}
+html body.ss-app-mode #ssDetail #ss6148VinylIndicator{width:8px;height:8px;flex:none;border-radius:50%;background:#705642;box-shadow:inset 0 0 0 1px rgba(242,195,132,.22)}
+html body.ss-app-mode #ssDetail #ss6148VinylIndicator.is-listened{background:#eab164;box-shadow:0 0 9px rgba(240,174,87,.4)}
+html body.ss-app-mode #ssDetail #ss6148VinylDate{font:400 12px/1.5 Jost,sans-serif;color:#e6bb8c;margin:0 0 9px}
+html body.ss-app-mode #ssDetail #ss6148VinylHistory small{font:400 11px/1.5 Jost,sans-serif;color:#ac9480}
+html body.ss-app-mode #ssDetail #ss6148VinylHistory+.ss-digital-diary{margin-top:12px}

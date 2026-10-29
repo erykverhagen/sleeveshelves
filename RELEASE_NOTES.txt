@@ -1,1 +1,8 @@
-SleeveShelves V61.4.7 — compact top-toolbar Now Spinning (no sidebar turntable); Listened sidebar: Vinyl / Digital / Both, driven by RLS-protected digital_listening_events. Spotify connection warnings, autoplay and physical listening remain unchanged. No new SQL; V61.4.3 Digital Listening Diary migration must already be installed.
+SleeveShelves V61.4.8 | Listening tab and visual controls fit
+
+- Shows the record's existing physical Last Listened date in Listening tab.
+- Reflects vinyl listened status from native record controls. No new DB fields.
+- Keeps Spotify digital listening diary separate and unchanged.
+- Slightly reduces the square sleeve (on desktop) to keep physical reaction controls and record chips within the visible modal.
+- Preserves all V61.4.7 features, player placement and Spotify authentication/error handling.
+- No Supabase migration. Replace full GitHub Pages website files.

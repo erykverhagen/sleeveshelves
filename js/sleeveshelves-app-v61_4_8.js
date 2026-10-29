@@ -3945,3 +3945,39 @@
  const receiver=$('#ss57Receiver');
  if(receiver){receiver.removeAttribute('aria-hidden');receiver.inert=false;}
 })();
+
+
+/* MODULE: SleeveShelves V61.4.8 physical-listening detail sync.
+ * Read the existing record state displayed under the sleeve. Never duplicate
+ * state or modify the persisted vinyl listening flags/dates.
+ */
+(()=>{
+ 'use strict';
+ const panel=document.getElementById('ssPanellistening');
+ const nativeState=document.getElementById('mStateBox');
+ if(!panel||!nativeState||document.getElementById('ss6148VinylHistory'))return;
+ const help=panel.querySelector('.ss56-diary-help');
+ if(help)help.textContent='Vinyl listening is saved on the record. Spotify plays are logged separately below.';
+ const section=document.createElement('section');
+ section.id='ss6148VinylHistory';
+ section.className='ss6148-vinyl-diary';
+ section.setAttribute('aria-label','Vinyl listening');
+ section.innerHTML=`<h3>Vinyl listens <span>PHYSICAL RECORD</span></h3>
+  <div class="ss6148-vinyl-status"><span id="ss6148VinylIndicator" aria-hidden="true"></span><strong id="ss6148VinylLabel">Not marked as listened</strong></div>
+  <p id="ss6148VinylDate">No vinyl listening date recorded.</p>
+  <small>Only your latest physical listen is saved for this record.</small>`;
+ const digital=panel.querySelector('.ss-digital-diary');
+ if(digital)panel.insertBefore(section,digital);else panel.append(section);
+ const indicator=section.querySelector('#ss6148VinylIndicator');
+ const label=section.querySelector('#ss6148VinylLabel');
+ const date=section.querySelector('#ss6148VinylDate');
+ function sync(){
+   const isListened=!!nativeState.querySelector('.m-listen-btn.on');
+   const stamp=nativeState.querySelector('.listened-stamp')?.textContent?.trim()||'';
+   label.textContent=isListened?'Marked as listened on vinyl':'Not marked as listened on vinyl';
+   indicator.classList.toggle('is-listened',isListened);
+   date.textContent=stamp||'No vinyl listening date recorded.';
+ }
+ new MutationObserver(sync).observe(nativeState,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['class']});
+ sync();
+})();
