@@ -713,6 +713,18 @@
     render();
   }
   window.applyFilters=applyFilters;
+  // V61.4.8 + Affinity: read-only bridge to the existing Supabase-native state.
+  // No new store, no mutation of records, filters, or existing handlers.
+  DW.getAffinitySnapshot = () => ({
+    userId: state.user?.id || null,
+    records: state.records.slice(),
+    collections: state.collections.map(c => ({...c})),
+    links: state.collectionLinks.map(l => ({...l})),
+    selectedCollectionId: state.filters.collectionId,
+    currentRecordId: state.currentId,
+    filteredRecordIds: state.filtered.map(r=>r.id)
+  });
+  DW.getAffinityClient = () => SB;
   DW.getNavigationData=()=>({
     collections:state.collections.map(c=>({id:c.id,name:c.name,count:state.records.filter(r=>collectionIdsForRecord(r).includes(c.id)).length})),
     total:state.records.length,shown:state.filtered.length,view:state.view,

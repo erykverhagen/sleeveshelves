@@ -1,0 +1,53 @@
+SleeveShelves V61.4.8 + Shelf Affinity V1.0
+==========================================
+SOURCE BASELINE: user-uploaded SleeveShelves_V61_4_8_GitHub_Pages_COMPLETE(1).zip
+
+THIS IS AN ADDITIVE FEATURE BRANCH, not a replacement of outstanding V61.4.8 fixes.
+No live Supabase database, records, or permissions were modified.
+
+WHAT'S WORKING IN THE SITE (WITHOUT SQL MIGRATION)
+- 'MY SHELF' replaces 'YOUR COLLECTIONS' in the sidebar label only.
+- 'More Like This' appears under the existing record detail > More tab.
+- My Shelf uses the full authenticated user's library, existing Discogs artist/genre/style/year data,
+  inferred tags and simple listening preferences. It never requires dozens of collections.
+- Locally generated Collection DNA and description appear above the results when viewing one of My Shelf's collections.
+- Existing same-artist links remain. Old simplistic same-genre recommendations are superseded.
+- Read-only native-state bridge, isolated styling and script; existing app code and saves preserved.
+
+WHAT NEEDS OPTIONAL STAGING SQL
+- Other Shelves: Cross-account candidate discovery via a server-authorized Supabase RPC.
+- Private by default. Discoverable only when the record room is opened AND an individual collection
+  is intentionally set to Public. Link-only and private collections are not discoverable.
+- Owner-controlled room/public visibility selectors are displayed in Collection Settings when the
+  optional SQL migration has been installed on that database.
+- When SQL is not installed, no public discovery occurs and no records are published.
+
+NOT IMPLEMENTED IN THIS BRANCH
+- Permanent collection/account subscriptions, share-by-link token redemption, public profile aliases,
+  or full outside-collection detail navigation. For now, discovered shelves show a PREVIEW of matched
+  publicly-authorized records. This is not a complete collection browse experience.
+- Editable AI-generated descriptions. Generated Collection DNA descriptions are currently view-only.
+- Third-party language-model AI or audio analysis. All text and scores are metadata-derived heuristics.
+
+TECHNICAL CHANGES
+- index.html: 1 sidebar caption change and four additive script/CSS includes.
+- js/sleeveshelves-app-v61_4_8.js: add two readonly DW_NATIVE accessor methods only.
+- NEW js/sleeveshelves-affinity.js (independent algorithm)
+- NEW js/sleeveshelves-supabase-adapter.js (read-only discovery RPC adapter)
+- NEW js/sleeveshelves-affinity-ui.js (interface, previews, explicit privacy settings)
+- NEW css/sleeveshelves-affinity-v1.css (scoped styling)
+- Existing V61 CSS, Spotify, original Supabase, turntable, favicon/assets remain unchanged.
+
+TESTING
+- 13/13 recommendation unit tests passed (Node built-in test runner).
+- Isolated Chromium with simulated Supabase data: 0 uncaught page errors, own/public recommendations,
+  collection preview, collection description and sidebar click tested.
+- Actual live Supabase, real user RLS isolation, Spotify auth, and mobile Safari have NOT been tested.
+- Existing unrelated issues in the uploaded baseline remain out of scope.
+
+DEPLOYMENT
+- You may preview/review this complete GitHub Pages file set without applying new SQL.
+- DO NOT run any SQL against production without a backup, staging schema check, and 2-user JWT RLS tests.
+- The SQL is deliberately delivered as a separate file, not included in the deployable site ZIP.
+- The external discovery pane will show 'not enabled' until staging setup is complete.
+- Feature can be disabled with window.SS_AFFINITY_ENABLED=false BEFORE the affinity UI script runs.

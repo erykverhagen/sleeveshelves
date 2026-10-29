@@ -72,6 +72,7 @@ html body .dw-auth-panel::before,html body .dw-auth-panel::after{content:none!im
 <link rel="stylesheet" href="css/deadwax-turntable-v45.css?v=61.4.2-full">
 <link rel="stylesheet" href="css/deadwax-spotify-v45.css?v=61.4.2-full">
 <link rel="stylesheet" href="css/sleeveshelves-v61.css?v=61.4.8">
+<link rel="stylesheet" href="css/sleeveshelves-affinity-v1.css?v=61.4.8-affinity1">
 <body class="ss-app-mode">
 <a class="skip-link" href="#mainArea">Skip to collection</a>
 <div id="ssApp" class="ss-app">
@@ -83,7 +84,7 @@ html body .dw-auth-panel::before,html body .dw-auth-panel::after{content:none!im
       <button type="button" data-ss-nav="favorites" class="ss-nav-item" title="Favorites"><span class="ss-nav-ico">♡</span><span class="ss-nav-name">Favorites</span></button>
       <button type="button" data-ss-nav="grails" class="ss-nav-item" title="Grail records"><span class="ss-nav-ico">◇</span><span class="ss-nav-name">Grails</span></button>
       <button type="button" data-ss-nav="discover" class="ss-nav-item" title="Surprise me with a record"><span class="ss-nav-ico">✧</span><span class="ss-nav-name">Surprise me</span></button>
-    </nav><div class="ss-nav-collection-title"><span class="ss-nav-caption">YOUR COLLECTIONS</span><button type="button" id="ssAddCollection" aria-label="Manage collections" title="Manage collections"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div><nav id="ssNavCollections" class="ss-nav-collections" aria-label="Your custom collections"></nav></div>
+    </nav><div class="ss-nav-collection-title"><span class="ss-nav-caption">MY SHELF</span><button type="button" id="ssAddCollection" aria-label="Manage collections" title="Manage collections"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div><nav id="ssNavCollections" class="ss-nav-collections" aria-label="Your custom collections"></nav></div>
     <footer class="ss-nav-footer"><div class="ss-footer-divider"></div><div id="ssProfileSlot"></div><div class="ss-footer-quiet"><span class="ss-footer-long">A home for the records that mean something.</span><span class="ss-footer-short">SS</span></div></footer>
   </aside>
   <section id="ssWorkspace" class="ss-workspace" aria-label="Record collection canvas">
@@ -361,6 +362,9 @@ html body .dw-auth-panel::before,html body .dw-auth-panel::after{content:none!im
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <script src="js/sleeveshelves-app-v61_4_8.js?v=61.4.8"></script>
+<script src="js/sleeveshelves-affinity.js?v=61.4.8-affinity1"></script>
+<script src="js/sleeveshelves-supabase-adapter.js?v=61.4.8-affinity1"></script>
+<script src="js/sleeveshelves-affinity-ui.js?v=61.4.8-affinity1"></script>
 <script>
 // Deployment integrity guard. Does not touch authentication or stored data.
 window.addEventListener('load', () => {
