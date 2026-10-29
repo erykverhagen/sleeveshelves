@@ -6,9 +6,7 @@
 (() => {
   'use strict';
   const CLIENT_ID='fc0940a0a57440c3b510d779180d1ab9';
-  // Resolve the Spotify OAuth callback from this deployed script's location,
-  // so GitHub Pages repo renames and preview paths do not leave a stale URL.
-  const REDIRECT=new URL('../spotify-callback.html', document.currentScript?.src || location.href).href;
+  const REDIRECT='https://erykverhagen.github.io/test/spotify-callback.html';
   const AUTH='https://accounts.spotify.com/authorize';
   const TOKEN='https://accounts.spotify.com/api/token';
   const API='https://api.spotify.com/v1';
@@ -40,7 +38,7 @@
   }
   async function getToken(){
     if(access&&Date.now()<expires-60000)return access;
-    if(!refresh)throw new Error('Connect your Spotify account in SleeveShelves settings.');
+    if(!refresh)throw new Error('Connect your Spotify account in Dead Wax settings.');
     try{await tokenRequest({grant_type:'refresh_token',refresh_token:refresh});}catch(e){disconnect(false);throw e;}
     return access;
   }
@@ -80,7 +78,7 @@
     const profile=$('#userPanelProfile');if(!profile)return null;
     let panel=$('#dw45SpotifyAccount');if(panel)return panel;
     panel=document.createElement('div');panel.id='dw45SpotifyAccount';panel.className='dw45-spotify-settings';
-    panel.innerHTML='<h3>Digital Turntable · Spotify</h3><p>Premium feature · Free Preview</p><div id="dw45SpotifyStatus" role="status"></div><div id="dw45SpotifyActions"></div><p class="dw45-settings-note">Spotify Premium required for playback. Your physical Listening Diary is separate. Authorization is kept in this browser tab; no Spotify password or token is stored in SleeveShelves records.</p>';
+    panel.innerHTML='<h3>Digital Turntable · Spotify</h3><p>Premium feature · Free Preview</p><div id="dw45SpotifyStatus" role="status"></div><div id="dw45SpotifyActions"></div><p class="dw45-settings-note">Spotify Premium required for playback. Your physical Listening Diary is separate. Authorization is kept in this browser tab; no Spotify password or token is stored in Dead Wax records.</p>';
     profile.append(panel);return panel;
   }
   function renderAccount(){
@@ -101,7 +99,7 @@
       });
     }
     if(player&&deviceId)return;
-    player=new Spotify.Player({name:'SleeveShelves Turntable',getOAuthToken:cb=>getToken().then(cb).catch(report),volume:0.75});
+    player=new Spotify.Player({name:'Dead Wax Digital Turntable',getOAuthToken:cb=>getToken().then(cb).catch(report),volume:0.75});
     player.addListener('ready',({device_id})=>{deviceId=device_id;transferred=false;renderAccount();});
     player.addListener('not_ready',()=>{deviceId=null;transferred=false;renderAccount();});
     for(const event of ['initialization_error','authentication_error','account_error','playback_error'])player.addListener(event,e=>report(new Error(e.message||event)));
@@ -160,7 +158,7 @@
   function matchModal(record,side,tracks){
     return new Promise(async(resolve,reject)=>{
       const shade=document.createElement('div');shade.className='dw45-match-overlay';shade.id='dw45MatchOverlay';
-      shade.innerHTML=`<section role="dialog" aria-modal="true" aria-labelledby="dw45MatchHeading" class="dw45-match-modal"><header><div><small>SLEEVESHELVES · SPOTIFY</small><h2 id="dw45MatchHeading">Match Side ${esc(side)} to Spotify</h2><p>Keep the physical vinyl track order. Confirm each Spotify recording before the needle drops.</p></div><button type="button" data-dw45-match-cancel aria-label="Cancel matching">✕</button></header><div class="dw45-match-rows"></div><footer><span id="dw45MatchNotice">Finding the corresponding recordings…</span><button type="button" data-dw45-match-confirm disabled>Confirm matches & play</button></footer></section>`;
+      shade.innerHTML=`<section role="dialog" aria-modal="true" aria-labelledby="dw45MatchHeading" class="dw45-match-modal"><header><div><small>DEAD WAX · SPOTIFY</small><h2 id="dw45MatchHeading">Match Side ${esc(side)} to Spotify</h2><p>Keep the physical vinyl track order. Confirm each Spotify recording before the needle drops.</p></div><button type="button" data-dw45-match-cancel aria-label="Cancel matching">✕</button></header><div class="dw45-match-rows"></div><footer><span id="dw45MatchNotice">Finding the corresponding recordings…</span><button type="button" data-dw45-match-confirm disabled>Confirm matches & play</button></footer></section>`;
       document.body.append(shade);
       let done=false;const finish=(err,result)=>{if(done)return;done=true;shade.remove();if(err)reject(err);else resolve(result);};
       shade.addEventListener('click',e=>{if(e.target.closest('[data-dw45-match-cancel]'))finish(new Error('Spotify matching cancelled.'));});
@@ -225,7 +223,7 @@
       if(Date.now()-a.startedAt<3000)return;
       // After that grace window, halt unexpected Spotify Connect content.
       if(!a.changing){a.changing=true;await player.pause().catch(()=>{});a.changing=false;
-        window.DW_TURNTABLE_V45?.reportProviderEvent({providerId:'spotify',kind:'error',error:'Spotify was changed outside SleeveShelves. Use Drop needle to resume this record.'});}
+        window.DW_TURNTABLE_V45?.reportProviderEvent({providerId:'spotify',kind:'error',error:'Spotify was changed outside Dead Wax. Use Drop needle to resume this record.'});}
       return;
     }
     const duration=state.duration||state.track_window.current_track.duration_ms||0;
