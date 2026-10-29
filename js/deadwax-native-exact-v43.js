@@ -32,7 +32,7 @@
     cfMomentumDir: 0,
     cfVelocity: 0,
     collapsed: new Set(),
-    filters: {global:'', code:'', artist:'', last:'', first:'', album:'', genre:'', listened:false, doubles:false, rating:'', lastListened:'', grail:false}
+    filters: {collectionId:'', global:'', code:'', artist:'', last:'', first:'', album:'', genre:'', listened:false, doubles:false, rating:'', lastListened:'', grail:false}
   };
 
   function esc(v){ return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -98,9 +98,52 @@
     }).filter(Boolean).filter(id => !isRecordCabinet(id));
   }
   function setSync(txt){ const n=$('#stDbStatus'); if(n) n.textContent=txt || 'Ready'; }
+  // V61.4: translate common Supabase errors without exposing internal API terms to collectors.
+  function explainError(error, context='save'){
+    const message=String(error?.message||error||'').trim();
+    const code=String(error?.code||'');
+    if(/email not confirmed|email.*confirm|confirmation required/i.test(message)) return 'Confirm your email using the link from Supabase, then sign in again.';
+    if(/invalid login credentials/i.test(message)) return 'That email or password was not recognized. Check both and try again.';
+    if(/email rate limit|over_email_send_rate_limit|rate limit exceeded/i.test(message)) return 'Too many attempts. Try again later or check whether a confirmation email already arrived.';
+    if(/jwt expired|invalid jwt|session.*expired|not authenticated/i.test(message)) return 'Your session has expired. Sign in again before saving.';
+    if(code==='23505' || /duplicate key value|unique constraint/i.test(message)) return context==='collection' ? 'A collection with that name already exists. Choose a different name or use the existing collection.' : 'A record with these details already exists. Check its shelf ID, artist and album.';
+    if(code==='23503') return 'This item refers to a record or collection that no longer exists. Refresh your collection and try again.';
+    if(code==='23514') return 'One of the values is outside the allowed range. Check the record fields.';
+    if(code==='22P02') return 'One of the selected identifiers is invalid. Refresh your collection and try again.';
+    if(code==='42501' || /row.level security|permission denied/i.test(message)) return 'Your account is not authorized for this change. Confirm your email, sign in again and retry.';
+    if(/fetch failed|failed to fetch|network|timed out/i.test(message)) return 'Cannot reach Supabase. Check your connection and try again. Your unsaved edits are still here.';
+    return message || 'Something went wrong. Please retry.';
+  }
+  function showSaveError(error,context='save'){
+    setSync('Save error');
+    alert(explainError(error,context));
+  }
+  // Database generates UUIDs; collection names, never slugs, are the user-facing identity.
+  async function getOrCreateCollection(name){
+    const clean=String(name||'').trim();
+    if(!clean || isRecordCabinet(clean)) throw new Error('Enter a collection name other than Record Cabinet.');
+    const cached=state.collections.find(c=>c.name===clean);
+    if(cached) return cached.id;
+    const insert=await SB.from('collections').insert({name:clean,user_id:state.user.id,locked:false}).select('id,name').single();
+    if(!insert.error){
+      const row=insert.data;
+      if(!state.collections.some(c=>c.id===row.id)) state.collections.push({...row,user_id:state.user.id});
+      return row.id;
+    }
+    if(String(insert.error.code)==='23505'){
+      // A second tab or concurrent import may have created the name first.
+      const existing=await SB.from('collections').select('id,name').eq('user_id',state.user.id).eq('name',clean).single();
+      if(!existing.error && existing.data){
+        if(!state.collections.some(c=>c.id===existing.data.id))state.collections.push({...existing.data,user_id:state.user.id});
+        return existing.data.id;
+      }
+    }
+    throw insert.error;
+  }
 
-  function dwLogo(){
-    return `<svg class="dw-mark" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><radialGradient id="g${Math.random().toString(36).slice(2)}" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#e8b840"/><stop offset="60%" stop-color="#b07818"/><stop offset="100%" stop-color="#7a5010"/></radialGradient></defs><circle cx="32" cy="32" r="30" fill="#d09a24"/><circle cx="32" cy="32" r="25" fill="none" stroke="#0b0906" stroke-width="3"/><circle cx="32" cy="32" r="20" fill="none" stroke="#0b0906" stroke-width="2.5"/><circle cx="32" cy="32" r="13" fill="#d09a24" stroke="#7a5010" stroke-width="1"/><text x="32" y="38" text-anchor="middle" font-family="serif" font-size="14" font-weight="600" fill="#0b0906">DW</text></svg>`;
+  // The single official Grail Record badge, shared by grid, list and cover flow.
+  function grailBadge(){
+    return '<img class="ss61-grail-art" src="assets/sleeveshelves-grail-edition.webp" alt="" loading="lazy" decoding="async">';
   }
 
   function dwLoginMark(){
@@ -286,7 +329,7 @@
       <text font-family="Jost,sans-serif" font-size="3.15" fill="#4a3509" letter-spacing=".85" font-weight="400" opacity="0.24"><textPath href="#m-arc-login" startOffset="0%">IN HONOR OF DAD · SO HIS COLLECTION MAY LIVE FOR GENERATIONS</textPath></text>
       <circle cx="141" cy="141" r="35" fill="#5a3c0a" opacity="0.46"/><circle cx="140" cy="140" r="35" fill="#d09a24"/><circle cx="140" cy="140" r="35" fill="url(#g-lbl-login)"/><circle cx="140" cy="140" r="35" fill="none" stroke="#a87218" stroke-width="0.7"/>
       <circle cx="140" cy="140" r="31" fill="none" stroke="#b8861e" stroke-width="0.34" opacity="0.42"/><circle cx="140" cy="140" r="27" fill="none" stroke="#b8861e" stroke-width="0.22" opacity="0.25"/>
-      <text x="140" y="148" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="28" font-weight="600" fill="#0b0906" letter-spacing="2.1">DW</text><circle cx="140" cy="140" r="4" fill="#0b0906" stroke="#6a4c10" stroke-width="0.42"/>
+      <text x="140" y="148" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="28" font-weight="600" fill="#0b0906" letter-spacing="2.1">SS</text><circle cx="140" cy="140" r="4" fill="#0b0906" stroke="#6a4c10" stroke-width="0.42"/>
     </svg>`;
   }
 
@@ -300,7 +343,7 @@
       .dw-turntable{position:relative;z-index:1;width:min(1080px,96vw);min-height:min(700px,88vh);display:grid;grid-template-columns:minmax(360px,1.08fr) minmax(310px,.76fr);gap:clamp(1rem,3vw,2.4rem);align-items:center;padding:clamp(1rem,3vw,2rem);border:1px solid rgba(208,154,36,.22);border-radius:30px;background:linear-gradient(145deg,#24180d 0%,#110c07 42%,#070503 100%);box-shadow:0 34px 110px rgba(0,0,0,.72),inset 0 1px 0 rgba(255,255,255,.055),inset 0 -1px 0 rgba(0,0,0,.72);overflow:hidden}.dw-turntable::before{content:'';position:absolute;inset:18px;border:1px solid rgba(208,154,36,.12);border-radius:24px;pointer-events:none}.dw-turntable::after{content:'';position:absolute;left:2.8rem;right:2.8rem;bottom:1.45rem;height:8px;border-radius:999px;background:linear-gradient(90deg,transparent,rgba(208,154,36,.16),transparent);filter:blur(4px);pointer-events:none}
       .dw-deck{position:relative;min-height:540px;display:flex;align-items:center;justify-content:center}.dw-platter{position:relative;width:min(520px,44vw);min-width:340px;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 50% 50%,#030302 0 5%,#14110d 5.4% 8%,#070605 8.4% 16%,#1a1712 16.4% 17.1%,#090807 17.5% 31%,#1f1b15 31.4% 32.1%,#080706 32.5% 48%,#231d15 48.4% 49.1%,#090705 49.4% 62%,#272018 62.4% 63.1%,#090705 63.5% 100%);box-shadow:0 22px 60px rgba(0,0,0,.7),inset 0 0 0 2px rgba(255,255,255,.025),inset 0 0 42px rgba(0,0,0,.9)}.dw-platter::before{content:'';position:absolute;inset:-18px;border-radius:50%;background:conic-gradient(from 0deg,rgba(208,154,36,.14),rgba(255,255,255,.03),rgba(208,154,36,.08),rgba(0,0,0,.18),rgba(208,154,36,.14));z-index:-1;box-shadow:inset 0 0 0 1px rgba(208,154,36,.18)}.dw-record{position:absolute;inset:7%;border-radius:50%;background:repeating-radial-gradient(circle at center,#080706 0 3px,#14110e 4px 5px,#080706 6px 9px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),inset 0 0 35px rgba(0,0,0,.75);animation:dwRecordSpin 18s linear infinite}.dw-label{position:absolute;inset:34%;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,#f0c34f 0%,#d09a24 48%,#8d6815 100%);border:2px solid rgba(11,9,6,.75);box-shadow:0 0 0 5px rgba(208,154,36,.16),inset 0 2px 4px rgba(244,234,210,.3)}.dw-label .dw-mark{width:82%;height:82%;filter:drop-shadow(0 2px 5px rgba(0,0,0,.35))}.dw-spindle{position:absolute;left:50%;top:50%;width:10px;height:10px;transform:translate(-50%,-50%);border-radius:50%;background:#f4ead2;box-shadow:0 0 0 3px #0b0906,0 0 20px rgba(240,195,79,.5)}
       .dw-tonearm{position:absolute;right:1.5%;top:8%;width:42%;height:42%;transform-origin:87% 18%;transform:rotate(-20deg);transition:transform .48s cubic-bezier(.18,.86,.22,1);pointer-events:none}.dw-auth.signup .dw-tonearm{transform:rotate(-8deg)}.dw-auth.signin .dw-tonearm{transform:rotate(6deg)}.dw-tonearm::before{content:'';position:absolute;right:8%;top:10%;width:72%;height:12px;border-radius:999px;background:linear-gradient(90deg,#d7c7a5,#6d5a3a 36%,#c7a75b);box-shadow:0 4px 12px rgba(0,0,0,.55);transform:rotate(32deg);transform-origin:right center}.dw-tonearm::after{content:'';position:absolute;left:8%;bottom:22%;width:34px;height:18px;border-radius:4px;background:#0b0906;border:1px solid rgba(240,195,79,.34);transform:rotate(32deg);box-shadow:0 6px 16px rgba(0,0,0,.58)}.dw-pivot{position:absolute;right:0;top:0;width:82px;height:82px;border-radius:50%;background:radial-gradient(circle,#2b2114 0 40%,#0b0906 42% 100%);border:1px solid rgba(208,154,36,.26);box-shadow:0 8px 24px rgba(0,0,0,.58)}
-      .dw-auth-panel{position:relative;z-index:3;align-self:center;border-radius:24px;border:1px solid rgba(208,154,36,.22);background:linear-gradient(180deg,rgba(21,16,8,.92),rgba(9,7,4,.96));box-shadow:0 22px 70px rgba(0,0,0,.62),inset 0 1px 0 rgba(255,255,255,.045);padding:1.35rem}.dw-auth-kicker{font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;color:var(--gd);font-weight:700}.dw-auth-title{font-family:'Cormorant Garamond',serif;color:var(--gl);font-size:clamp(2.2rem,4vw,3.8rem);line-height:.92;margin:.3rem 0 .4rem}.dw-auth-copy{color:var(--mt);font-size:.82rem;line-height:1.55;margin:0 0 1.1rem}.dw-auth-card label{display:block;font-size:.58rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--m2);margin:.68rem 0 .24rem}.dw-auth-card input{width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:9px;color:var(--cream);padding:.68rem .78rem;font-family:'Jost',sans-serif;outline:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.025)}.dw-auth-card input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(208,154,36,.12),inset 0 1px 0 rgba(255,255,255,.04)}.dw-deck-controls{display:grid;grid-template-columns:1fr 1fr;gap:.78rem;margin-top:1.05rem}.dw-deck-btn{position:relative;min-height:3.2rem;border-radius:999px;border:1px solid rgba(208,154,36,.42);font-family:'Jost',sans-serif;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:transform .16s ease,filter .16s ease,box-shadow .16s ease;box-shadow:0 8px 18px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.16)}.dw-deck-btn:active{transform:translateY(2px);box-shadow:0 4px 10px rgba(0,0,0,.44),inset 0 2px 8px rgba(0,0,0,.34)}.dw-deck-btn.signin{background:linear-gradient(180deg,var(--gl),var(--gold));color:#0b0906}.dw-deck-btn.signup{background:linear-gradient(180deg,#251a0d,#100b06);color:var(--gl);border-color:rgba(240,195,79,.28)}.dw-deck-btn:hover{filter:brightness(1.06)}.dw-deck-btn::before{content:'';position:absolute;left:1rem;top:50%;width:.48rem;height:.48rem;border-radius:50%;transform:translateY(-50%);background:currentColor;opacity:.58;box-shadow:0 0 12px currentColor}.dw-auth-error{color:#ff8a7f;font-size:.74rem;line-height:1.35;margin-top:.72rem;min-height:1rem}.dw-auth-note{display:flex;align-items:center;gap:.48rem;margin-top:.8rem;color:var(--m2);font-size:.62rem}.dw-auth-note::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 12px rgba(208,154,36,.6)}.dw-booting:before{content:'Loading Dead Wax…';position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:1.4rem}@keyframes dwRecordSpin{to{transform:rotate(360deg)}}
+      .dw-auth-panel{position:relative;z-index:3;align-self:center;border-radius:24px;border:1px solid rgba(208,154,36,.22);background:linear-gradient(180deg,rgba(21,16,8,.92),rgba(9,7,4,.96));box-shadow:0 22px 70px rgba(0,0,0,.62),inset 0 1px 0 rgba(255,255,255,.045);padding:1.35rem}.dw-auth-kicker{font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;color:var(--gd);font-weight:700}.dw-auth-title{font-family:'Cormorant Garamond',serif;color:var(--gl);font-size:clamp(2.2rem,4vw,3.8rem);line-height:.92;margin:.3rem 0 .4rem}.dw-auth-copy{color:var(--mt);font-size:.82rem;line-height:1.55;margin:0 0 1.1rem}.dw-auth-card label{display:block;font-size:.58rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--m2);margin:.68rem 0 .24rem}.dw-auth-card input{width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:9px;color:var(--cream);padding:.68rem .78rem;font-family:'Jost',sans-serif;outline:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.025)}.dw-auth-card input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(208,154,36,.12),inset 0 1px 0 rgba(255,255,255,.04)}.dw-deck-controls{display:grid;grid-template-columns:1fr 1fr;gap:.78rem;margin-top:1.05rem}.dw-deck-btn{position:relative;min-height:3.2rem;border-radius:999px;border:1px solid rgba(208,154,36,.42);font-family:'Jost',sans-serif;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:transform .16s ease,filter .16s ease,box-shadow .16s ease;box-shadow:0 8px 18px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.16)}.dw-deck-btn:active{transform:translateY(2px);box-shadow:0 4px 10px rgba(0,0,0,.44),inset 0 2px 8px rgba(0,0,0,.34)}.dw-deck-btn.signin{background:linear-gradient(180deg,var(--gl),var(--gold));color:#0b0906}.dw-deck-btn.signup{background:linear-gradient(180deg,#251a0d,#100b06);color:var(--gl);border-color:rgba(240,195,79,.28)}.dw-deck-btn:hover{filter:brightness(1.06)}.dw-deck-btn::before{content:'';position:absolute;left:1rem;top:50%;width:.48rem;height:.48rem;border-radius:50%;transform:translateY(-50%);background:currentColor;opacity:.58;box-shadow:0 0 12px currentColor}.dw-auth-error{color:#ff8a7f;font-size:.74rem;line-height:1.35;margin-top:.72rem;min-height:1rem}.dw-auth-note{display:flex;align-items:center;gap:.48rem;margin-top:.8rem;color:var(--m2);font-size:.62rem}.dw-auth-note::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 12px rgba(208,154,36,.6)}.dw-booting:before{content:'Loading SleeveShelves…';position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:1.4rem}@keyframes dwRecordSpin{to{transform:rotate(360deg)}}
       @media(max-width:840px){.dw-turntable{grid-template-columns:1fr;min-height:auto}.dw-deck{min-height:390px}.dw-platter{width:min(420px,82vw);min-width:260px}.dw-tonearm{right:8%;top:5%;width:36%;height:36%}.dw-auth-panel{width:100%}}
       @media(max-width:520px){.dw-auth{padding:.55rem}.dw-turntable{border-radius:22px;padding:.85rem}.dw-deck{min-height:310px}.dw-auth-title{font-size:2.25rem}.dw-deck-controls{grid-template-columns:1fr}.dw-auth-panel{padding:1rem}.dw-pivot{width:58px;height:58px}}
       @media(prefers-reduced-motion:reduce){.dw-record{animation:none}.dw-tonearm,.dw-deck-btn{transition:none}}
@@ -516,7 +559,7 @@
     const d=document.createElement('div');
     d.id='dwAuth';
     d.className='dw-auth signin';
-    d.innerHTML=`<div class="dw-turntable" role="dialog" aria-modal="true" aria-labelledby="dwAuthTitle"><div class="dw-deck" aria-hidden="true"><div class="dw-platter"><div class="dw-record"></div><div class="dw-label">${dwLoginMark()}</div><div class="dw-spindle"></div></div></div><div class="dw-auth-side"><section class="dw-auth-intro"><div class="dw-auth-intro-kicker">Your private vinyl collection</div><h1 id="dwAuthTitle">Dead Wax</h1><p>Dead Wax is your private vinyl collection: shelf IDs, collection labels, listening notes, and Discogs details in one warm, searchable home.</p></section><section class="dw-auth-panel"><form class="dw-auth-card" id="dwAuthForm"><label for="dwEmail">Email</label><input id="dwEmail" type="email" autocomplete="email" required><label for="dwPassword">Password</label><input id="dwPassword" type="password" autocomplete="current-password" required><div class="dw-deck-controls"><button type="submit" class="dw-deck-btn signin" id="dwSignInBtn">Sign in</button><button type="button" class="dw-deck-btn signup" id="dwSignUp">Sign up</button></div><div class="dw-auth-error" id="dwAuthError"></div></form></section></div></div>`;
+    d.innerHTML=`<div class="dw-turntable" role="dialog" aria-modal="true" aria-labelledby="dwAuthTitle"><div class="dw-deck" aria-hidden="true"><div class="dw-platter"><div class="dw-record"></div><div class="dw-label">${dwLoginMark()}</div><div class="dw-spindle"></div></div></div><div class="dw-auth-side"><section class="dw-auth-intro"><div class="dw-auth-intro-kicker">Your private vinyl collection</div><h1 id="dwAuthTitle">SleeveShelves</h1><p>SleeveShelves is your private vinyl archive: shelf IDs, collection labels, listening notes, and Discogs details in one warm, searchable home.</p></section><section class="dw-auth-panel"><form class="dw-auth-card" id="dwAuthForm"><label for="dwEmail">Email</label><input id="dwEmail" type="email" autocomplete="email" required><label for="dwPassword">Password</label><input id="dwPassword" type="password" autocomplete="current-password" required><div class="dw-deck-controls"><button type="submit" class="dw-deck-btn signin" id="dwSignInBtn">Sign in</button><button type="button" class="dw-deck-btn signup" id="dwSignUp">Sign up</button></div><div class="dw-auth-error" id="dwAuthError"></div></form></section></div></div>`;
     document.body.appendChild(d);
     const setAuthMode=(mode)=>{ d.classList.toggle('signup',mode==='signup'); d.classList.toggle('signin',mode!=='signup'); };
     $('#dwSignInBtn').addEventListener('mouseenter',()=>setAuthMode('signin'));
@@ -529,12 +572,27 @@
 
   async function authIn(signup){
     const email=$('#dwEmail').value.trim(), password=$('#dwPassword').value;
-    $('#dwAuthError').textContent='';
-    const res = signup ? await SB.auth.signUp({email,password}) : await SB.auth.signInWithPassword({email,password});
-    if(res.error){ $('#dwAuthError').textContent=res.error.message; return; }
-    state.user=res.data.user || (await SB.auth.getUser()).data.user;
-    $('#dwAuth').classList.remove('on');
-    await loadAll();
+    const message=$('#dwAuthError');
+    const buttons=[$('#dwSignInBtn'),$('#dwSignUp')];
+    message.setAttribute('role','status');message.setAttribute('aria-live','polite');
+    message.textContent='';
+    if(!email || !password){message.textContent='Enter your email and password first.';return;}
+    buttons.forEach(b=>b.disabled=true);
+    try{
+      const res=signup ? await SB.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin+window.location.pathname}}) : await SB.auth.signInWithPassword({email,password});
+      if(res.error){message.textContent=explainError(res.error,'auth');return;}
+      // Supabase may return a user without a session when email confirmation is required.
+      // A user object alone MUST NOT unlock the collection or attempt a database write.
+      if(!res.data?.session?.user){
+        message.textContent=signup ? 'Check your inbox to confirm your email, then return here and sign in. Your collection will stay locked until confirmation.' : 'Sign-in has not completed. Confirm your email and sign in again.';
+        return;
+      }
+      state.user=res.data.session.user;
+      const loaded=await loadAll();
+      if(!loaded){state.user=null;return;}
+      $('#dwAuth').classList.remove('on');
+    }catch(e){message.textContent=explainError(e,'auth');}
+    finally{buttons.forEach(b=>b.disabled=false);}
   }
 
   async function signOut(){
@@ -547,13 +605,16 @@
 
   async function initAuth(){
     ensureAuthShell();
-    if(!SB){ alert('Supabase config missing.'); return; }
+    if(!SB){ $('#dwAuth').classList.add('on'); $('#dwAuthError').textContent='Supabase connection is missing. Check the website configuration.'; return; }
     document.documentElement.classList.add('dw-booting');
-    const {data:{session}} = await SB.auth.getSession();
-    document.documentElement.classList.remove('dw-booting');
-    if(!session?.user){ $('#dwAuth').classList.add('on'); renderEmptyShell(); return; }
-    state.user=session.user;
-    await loadAll();
+    try{
+      const {data,error}=await SB.auth.getSession();
+      if(error) throw error;
+      if(!data?.session?.user){ $('#dwAuth').classList.add('on'); renderEmptyShell(); return; }
+      state.user=data.session.user;
+      if(!(await loadAll())) $('#dwAuth').classList.add('on');
+    }catch(e){ $('#dwAuth').classList.add('on'); $('#dwAuthError').textContent=explainError(e,'auth'); renderEmptyShell(); }
+    finally{document.documentElement.classList.remove('dw-booting');}
   }
 
   async function loadAll(){
@@ -564,9 +625,14 @@
       SB.from('collections').select('*').eq('user_id',state.user.id).order('name',{ascending:true}),
       SB.from('record_collections').select('record_id,collection_id').eq('user_id',state.user.id)
     ]);
-    if(recRes.error){ alert(recRes.error.message); return; }
-    if(colRes.error){ console.warn(colRes.error); }
-    if(linkRes.error){ console.warn(linkRes.error); }
+    if(recRes.error || colRes.error || linkRes.error){
+      const error=recRes.error||colRes.error||linkRes.error;
+      setSync('Sync error');
+      const text='Could not load your collection: '+explainError(error,'load');
+      if($('#dwAuth')?.classList.contains('on')) $('#dwAuthError').textContent=text;
+      else alert(text);
+      return false; // Never silently overwrite real data with an incomplete load.
+    }
     state.collections = visibleCollectionRows(colRes.data || []);
     state.collectionLinks = linkRes.data || [];
     const linkMap = new Map();
@@ -577,6 +643,7 @@
     state.records = (recRes.data || []).map(r => normalizeRecord({...r, collection_ids: linkMap.get(r.id) || []}));
     applyFilters();
     setSync('Synced');
+    return true;
   }
 
   function normalizeRecord(r){
@@ -596,7 +663,7 @@
   }
 
   function renderEmptyShell(){
-    $('#gridWrap').innerHTML='<div class="no-res"><h3>Sign in to open Dead Wax</h3><p>Your records will load from Supabase.</p></div>';
+    $('#gridWrap').innerHTML='<div class="no-res"><h3>Sign in to open SleeveShelves</h3><p>Your records will load from Supabase.</p></div>';
     $('#listBody').innerHTML='';
     $('#cfStage').innerHTML='';
     $('#cfMeta').innerHTML='';
@@ -611,6 +678,7 @@
       const hay=[r.shelf_id,r.artist,r.album,r.last,r.first,r.genre,collectionNames(r).join(' '),tracks(r).map(t=>t.title).join(' ')].join(' ');
       return norm(hay).includes(q);
     });
+    if(f.collectionId) a=a.filter(r=>collectionIdsForRecord(r).includes(f.collectionId));
     if(f.code) a=a.filter(r=>norm(recordCode(r)).includes(norm(f.code)));
     if(f.artist) a=a.filter(r=>norm(r.artist).includes(norm(f.artist)));
     if(f.last) a=a.filter(r=>norm(r.last).includes(norm(f.last)));
@@ -637,6 +705,15 @@
     render();
   }
   window.applyFilters=applyFilters;
+  DW.getNavigationData=()=>({
+    collections:state.collections.map(c=>({id:c.id,name:c.name,count:state.records.filter(r=>collectionIdsForRecord(r).includes(c.id)).length})),
+    total:state.records.length,shown:state.filtered.length,view:state.view,
+    selectedCollection:state.filters.collectionId,grails:state.records.filter(r=>r.grail).length,
+    listened:state.records.filter(r=>r.listened).length,
+    favorites:state.records.filter(r=>reactionValue(r)==='favorite').length
+  });
+  DW.setCollectionFilter=(id)=>{ state.filters.collectionId=id||''; applyFilters(); };
+
 
   function groupRecords(arrIn){
     const a=[...arrIn];
@@ -700,6 +777,7 @@
     if(state.view==='list') renderList();
     if(state.view==='flow') renderFlow();
     updateHdrH();
+    window.dispatchEvent(new Event('sleeveshelves:render'));
   }
 
   function updateButtons(){
@@ -818,7 +896,7 @@
     const distance=Math.abs(offset);
     const pose=flowPose(offset);
     const flipped=active && state.cfFlipId===r.id;
-    return `<div class="cf-card ${active?'active':''}${distance>8?' off':''} cf-ready" data-id="${esc(r.id)}" style="z-index:${Math.max(1,700-Math.round(distance*10))};opacity:${pose.opacity};transform:${flowTransform(pose)};" onclick="cfClick('${esc(r.id)}',event)"><div class="cf-scene card-scene ${flipped?'flipped':''}"><div class="card-inner"><div class="card-front"><div class="card-cover">${coverHtml(r)}${r.grail?`<span class="grail-mark">${dwLogo()}</span>`:''}<div class="cf-code">${esc(recordCode(r))}</div></div></div><div class="card-back">${trackBack(r)}</div></div></div><div class="cf-cover-shadow"></div></div>`;
+    return `<div class="cf-card ${active?'active':''}${distance>8?' off':''} cf-ready" data-id="${esc(r.id)}" style="z-index:${Math.max(1,700-Math.round(distance*10))};opacity:${pose.opacity};transform:${flowTransform(pose)};" onclick="cfClick('${esc(r.id)}',event)"><div class="cf-scene card-scene ${flipped?'flipped':''}"><div class="card-inner"><div class="card-front"><div class="card-cover">${coverHtml(r)}${r.grail?`<span class="grail-mark" role="img" aria-label="Grail record">${grailBadge()}</span>`:''}<div class="cf-code">${esc(recordCode(r))}</div></div></div><div class="card-back">${trackBack(r)}</div></div></div><div class="cf-cover-shadow"></div></div>`;
   }
 
   function cfStageMoving(on){
@@ -980,7 +1058,7 @@
     const idx=state.filtered.findIndex(x=>x.id===r.id);
     return `<article class="card-scene" tabindex="0" data-id="${esc(r.id)}" onclick="openModal(${idx})" onkeydown="if(event.key==='Enter')openModal(${idx})">
       <div class="card-inner">
-        <div class="card-front"><div class="card-cover">${coverHtml(r)}${r.grail?`<span class="grail-mark">${dwLogo()}</span>`:''}</div><div class="card-info"><div class="card-code-row"><div class="card-code">${esc(recordCode(r))}</div><div class="card-cover-status">${statusIcons(r)}</div></div><div class="card-artist">${esc(r.artist)}</div><div class="card-album">${esc(r.album)}</div><div class="card-ft"><span class="card-qty">×${esc(r.copies_owned||1)}</span>${r.genre?`<span class="card-genre">${esc(r.genre)}</span>`:''}</div></div></div>
+        <div class="card-front"><div class="card-cover">${coverHtml(r)}${r.grail?`<span class="grail-mark" role="img" aria-label="Grail record">${grailBadge()}</span>`:''}</div><div class="card-info"><div class="card-code-row"><div class="card-code">${esc(recordCode(r))}</div><div class="card-cover-status">${statusIcons(r)}</div></div><div class="card-artist">${esc(r.artist)}</div><div class="card-album">${esc(r.album)}</div><div class="card-ft"><span class="card-qty">×${esc(r.copies_owned||1)}</span>${r.genre?`<span class="card-genre">${esc(r.genre)}</span>`:''}</div></div></div>
         <div class="card-back">${trackBack(r)}</div>
       </div>
     </article>`;
@@ -988,7 +1066,7 @@
 
   function renderRow(r){
     const idx=state.filtered.findIndex(x=>x.id===r.id);
-    return `<div class="list-row" tabindex="0" onclick="openModal(${idx})"><div><div class="lthumb">${coverHtml(r)}${r.grail?`<span class="list-grail-mark">${dwLogo()}</span>`:''}</div></div><div class="c-code">${esc(recordCode(r))}</div><div class="c-art">${esc(r.artist)}</div><div class="c-alb">${esc(r.album)}</div><div class="c-nm">${esc(r.last||'')}</div><div class="c-nm">${esc(r.first||'')}</div><div class="c-gn"><span class="c-gn-txt">${esc(r.genre||'')}</span><span class="inline-status">${statusIcons(r)}</span></div><div class="c-qt">×${esc(r.copies_owned||1)}</div></div>`;
+    return `<div class="list-row" tabindex="0" onclick="openModal(${idx})"><div><div class="lthumb">${coverHtml(r)}${r.grail?`<span class="list-grail-mark" role="img" aria-label="Grail record">${grailBadge()}</span>`:''}</div></div><div class="c-code">${esc(recordCode(r))}</div><div class="c-art">${esc(r.artist)}</div><div class="c-alb">${esc(r.album)}</div><div class="c-nm">${esc(r.last||'')}</div><div class="c-nm">${esc(r.first||'')}</div><div class="c-gn"><span class="c-gn-txt">${esc(r.genre||'')}</span><span class="inline-status">${statusIcons(r)}</span></div><div class="c-qt">×${esc(r.copies_owned||1)}</div></div>`;
   }
 
   function statusIcons(r){
@@ -1030,8 +1108,13 @@
     sel.innerHTML='<option value="">All Genres</option>'+genres.map(g=>`<option ${g===cur?'selected':''}>${esc(g)}</option>`).join('');
   }
 
-  function lockPage(){ document.body.classList.add('dw-modal-open'); }
-  function unlockPage(){ if(!document.querySelector('.ov.on,.f-ov.on,.s-ov.on')) document.body.classList.remove('dw-modal-open'); }
+  function lockPage(){
+    if(!document.body.classList.contains('ss-app-mode') || document.querySelector('.f-ov.on,.s-ov.on')) document.body.classList.add('dw-modal-open');
+  }
+  function unlockPage(){
+    const selector=document.body.classList.contains('ss-app-mode') ? '.f-ov.on,.s-ov.on' : '.ov.on,.f-ov.on,.s-ov.on';
+    if(!document.querySelector(selector)) document.body.classList.remove('dw-modal-open');
+  }
 
   function openModal(idx){
     const r=state.filtered[idx]; if(!r) return;
@@ -1074,7 +1157,7 @@
   function current(){ return state.records.find(r=>r.id===state.currentId) || state.filtered.find(r=>r.id===state.currentId); }
 
   function renderModalState(r){
-    $('#mStateBox').innerHTML=`<div class="m-state-row"><button type="button" class="m-listen-btn ${r.listened?'on':''}" onclick="toggleListened()" title="Listened">♪</button><span class="m-state-divider"></span><div class="m-rating-row"><button type="button" class="m-rate-btn disliked ${reactionValue(r)==='disliked'?'on':''}" onclick="setReaction('disliked')" title="Disliked">⌄</button><button type="button" class="m-rate-btn liked ${reactionValue(r)==='liked'?'on':''}" onclick="setReaction('liked')" title="Liked">⌃</button><button type="button" class="m-rate-btn favorite ${reactionValue(r)==='favorite'?'on':''}" onclick="setReaction('favorite')" title="Favorite">★</button></div></div>${r.listened_at?`<span class="listened-stamp">Last listened ${esc(new Date(r.listened_at).toLocaleDateString())}</span>`:''}`;
+    $('#mStateBox').innerHTML=`<div class="m-state-row"><button type="button" class="m-listen-btn ${r.listened?'on':''}" onclick="toggleListened()" title="Mark as listened" aria-label="Mark record as listened">♪</button><span class="m-state-divider"></span><div class="m-rating-row"><button type="button" class="m-rate-btn disliked ${reactionValue(r)==='disliked'?'on':''}" onclick="setReaction('disliked')" title="Disliked" aria-label="Disliked"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V4H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3v-5Z"/><path d="M7 10 11 2c.6-1.3 3-1.2 3 .5V8h5a3 3 0 0 1 2.9 3.9l-2.1 7A3 3 0 0 1 17 21H7V10Z"/></svg></button><button type="button" class="m-rate-btn liked ${reactionValue(r)==='liked'?'on':''}" onclick="setReaction('liked')" title="Liked" aria-label="Liked"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V4H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3v-5Z"/><path d="M7 10 11 2c.6-1.3 3-1.2 3 .5V8h5a3 3 0 0 1 2.9 3.9l-2.1 7A3 3 0 0 1 17 21H7V10Z"/></svg></button><button type="button" class="m-rate-btn favorite ${reactionValue(r)==='favorite'?'on':''}" onclick="setReaction('favorite')" title="Favorite record" aria-label="Mark record as favorite">★</button></div></div>${r.listened_at?`<span class="listened-stamp">Last listened ${esc(new Date(r.listened_at).toLocaleDateString())}</span>`:''}`;
   }
 
   function renderModalCollections(r){
@@ -1104,38 +1187,79 @@
   function closeModal(){ $('#detOv').classList.remove('on'); $('#detOv').setAttribute('aria-hidden','true'); state.currentId=null; unlockPage(); }
   window.closeModal=closeModal;
 
+  // Stage 1: a failed mutation must be visible to its caller. A save is not
+  // successful until the record and requested collection links are verified.
   async function saveRecord(r,patch,action='record_update', reopen=true){
+    if(!r) return false;
     if(patch && Object.prototype.hasOwnProperty.call(patch,'collections')) patch.collections = internalCollections(patch.collections);
-    if(!r) return;
     setSync('Saving');
     const linkIds = patch && Object.prototype.hasOwnProperty.call(patch,'collection_ids') ? arr(patch.collection_ids) : null;
     const payload={...patch, updated_at:new Date().toISOString()};
     delete payload.collection_ids;
-    const {data,error}=await SB.from('records').update(payload).eq('id',r.id).eq('user_id',state.user.id).select(FIELDS).single();
-    if(error){ setSync('Save error'); alert(error.message); return; }
-    if(linkIds){
-      try{ await syncRecordCollections(data.id, linkIds); }catch(e){ setSync('Collection save error'); alert(e.message); return; }
-      data.collection_ids = linkIds;
+    try {
+      const {data,error}=await SB.from('records').update(payload).eq('id',r.id).eq('user_id',state.user.id).select(FIELDS).single();
+      if(error) throw error;
+      if(linkIds !== null){
+        await syncRecordCollections(data.id,linkIds);
+        data.collection_ids=linkIds;
+      }
+      await logChange(action,r,data);
+      const idx=state.records.findIndex(x=>x.id===r.id);
+      if(idx>=0) state.records[idx]=normalizeRecord(data);
+      applyFilters();
+      setSync('Saved');
+      if(reopen){const fi=state.filtered.findIndex(x=>x.id===data.id);if(fi>=0)openModal(fi);}
+      return true;
+    }catch(e){
+      // If the record update completed before link sync failed, the metadata
+      // may already be saved. Keep the editor open and report the uncertainty.
+      setSync('Save incomplete');
+      alert('The save did not fully complete. Check the record and its collection labels before retrying.\n'+explainError(e,'save'));
+      return false;
     }
-    await logChange(action,r,data);
-    const idx=state.records.findIndex(x=>x.id===r.id);
-    if(idx>=0) state.records[idx]=normalizeRecord(data);
-    applyFilters();
-    if(reopen){ const fi=state.filtered.findIndex(x=>x.id===data.id); if(fi>=0) openModal(fi); }
   }
 
   async function logChange(action,before,after){
     try{ await SB.from('change_log').insert({user_id:state.user.id,action,before_data:before||null,after_data:after||null}); }catch(e){}
   }
 
+  // The database migration provides one authenticated transaction for links.
+  // Until installed, the compatibility path only inserts additions BEFORE
+  // deleting obsolete links, never a destructive delete-all/reinsert cycle.
   async function syncRecordCollections(recordId, ids){
-    const clean=[...new Set(arr(ids).filter(Boolean).filter(id => !isRecordCabinet(id)))];
-    const del=await SB.from('record_collections').delete().eq('user_id',state.user.id).eq('record_id',recordId);
-    if(del.error) throw del.error;
-    if(clean.length){
-      const rows=clean.map(collection_id => ({user_id:state.user.id, record_id:recordId, collection_id}));
-      const ins=await SB.from('record_collections').insert(rows);
-      if(ins.error) throw ins.error;
+    const clean=[...new Set(arr(ids).filter(Boolean).filter(id=>!isRecordCabinet(id)))];
+    const desired=new Set(clean);
+    const rpc=await SB.rpc('ss_set_record_collections',{
+      p_record_id:String(recordId), p_collection_ids:clean
+    });
+    if(!rpc.error) return;
+    const unavailable=['PGRST202','42883'].includes(rpc.error.code) ||
+      /function.*ss_set_record_collections.*(not found|does not exist|schema cache)/i.test(rpc.error.message||'');
+    if(!unavailable) throw rpc.error;
+
+    const read=await SB.from('record_collections').select('collection_id')
+      .eq('user_id',state.user.id).eq('record_id',recordId);
+    if(read.error) throw read.error;
+    const existing=new Set((read.data||[]).map(row=>row.collection_id));
+    const toAdd=clean.filter(id=>!existing.has(id));
+    const toRemove=[...existing].filter(id=>!desired.has(id));
+    if(toAdd.length){
+      const rows=toAdd.map(collection_id=>({user_id:state.user.id,record_id:recordId,collection_id}));
+      const result=await SB.from('record_collections').insert(rows);
+      if(result.error) throw result.error;
+    }
+    // Delete only redundant links; other existing assignments stay intact.
+    if(toRemove.length){
+      const removed=await SB.from('record_collections').delete()
+        .eq('user_id',state.user.id).eq('record_id',recordId).in('collection_id',toRemove);
+      if(removed.error) throw removed.error;
+    }
+    const check=await SB.from('record_collections').select('collection_id')
+      .eq('user_id',state.user.id).eq('record_id',recordId);
+    if(check.error) throw check.error;
+    const actual=new Set((check.data||[]).map(row=>row.collection_id));
+    if(actual.size!==desired.size || [...desired].some(id=>!actual.has(id))){
+      throw new Error('Collection links were not fully synchronized. No success was reported.');
     }
   }
 
@@ -1156,12 +1280,11 @@
   async function createCollectionForCurrent(){
     const name=prompt('New collection label');
     if(!name || !name.trim()) return;
-    if(isRecordCabinet(name)){ alert('Record Cabinet is the hidden base layer, not a visible label.'); return; }
-    const id=name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-    const {error}=await SB.from('collections').upsert({id,name:name.trim(),user_id:state.user.id,locked:false},{onConflict:'user_id,id'});
-    if(error){ alert(error.message); return; }
-    await loadAll();
-    await addCollectionToCurrent(id);
+    try{
+      const id=await getOrCreateCollection(name);
+      await loadAll();
+      await addCollectionToCurrent(id);
+    }catch(e){showSaveError(e,'collection');}
   }
   window.createCollectionForCurrent=createCollectionForCurrent;
 
@@ -1205,6 +1328,9 @@
   function openForm(idx){
     const r = typeof idx==='number' ? state.filtered[idx] : null;
     state.currentId = r?.id || null;
+    // Remember the detail tab at the moment editing begins, before other
+    // components can react to form events and change their selection.
+    $('#fOv').dataset.returnTab = $('#detOv')?.classList.contains('on') ? ($('#detModal .ss-detail-tabs [role="tab"][aria-selected="true"]')?.dataset.ssTab || 'tracks') : '';
     $('#fTitle').textContent = r ? 'Edit Record' : 'Add Record';
     $('#formModal .f-sub').textContent='Saved to Supabase';
     $('#fldCode').value=recordCode(r||{}) || '';
@@ -1220,6 +1346,7 @@
     renderCollectionSelect(r);
     renderTrackEditor(tracks(r||{}));
     prevImg();
+    const ssRemove=$('#ssFormRemove'); if(ssRemove)ssRemove.hidden=!r;
     $('#fOv').classList.add('on'); lockPage(); $('#fOv').setAttribute('aria-hidden','false');
   }
   window.openForm=openForm;
@@ -1234,9 +1361,18 @@
   function renderTrackEditor(ts=[]){
     const grid=$('#fTrackGrid');
     const sides={};
-    arr(ts).forEach(t=>{ const side=String(t.position||'A').match(/^[A-Z]+/)?.[0]||'A'; (sides[side] ||= []).push(t); });
+    arr(ts).forEach(t=>{const side=String(t.position||'A').match(/^[A-Z]+/)?.[0]||'A';(sides[side] ||= []).push(t);});
     const letters=Object.keys(sides).length?Object.keys(sides):['A','B'];
-    grid.innerHTML=letters.map(side=>`<div class="ff"><label for="side_${side}">Side ${side}</label><textarea id="side_${side}" data-side="${side}" placeholder="A1 | Track title | 3:21">${(sides[side]||[]).map(t=>[t.position,t.title,t.duration].filter(Boolean).join(' | ')).join('\n')}</textarea></div>`).join('');
+    // Textarea .value is essential here: imported titles may contain markup.
+    grid.replaceChildren();
+    for(const side of letters){
+      const wrap=document.createElement('div');wrap.className='ff';
+      const label=document.createElement('label');label.htmlFor='side_'+side;label.textContent='Side '+side;
+      const input=document.createElement('textarea');input.id='side_'+side;
+      input.dataset.side=side;input.placeholder='A1 | Track title | 3:21';
+      input.value=(sides[side]||[]).map(t=>[t.position,t.title,t.duration].filter(Boolean).join(' | ')).join('\n');
+      wrap.append(label,input);grid.append(wrap);
+    }
   }
 
   function parseTrackEditor(){
@@ -1273,15 +1409,43 @@
     };
     if(!payload.shelf_id || !payload.artist){ alert('Shelf ID and Artist are required.'); return; }
     if(r){
-      await saveRecord(r,payload,'record_edit',false);
+      const saved=await saveRecord(r,payload,'record_edit',false);
+      if(!saved) return;
     }else{
-      const {data,error}=await SB.from('records').upsert(payload,{onConflict:'user_id,shelf_id'}).select(FIELDS).single();
-      if(error){ alert(error.message); return; }
-      try{ await syncRecordCollections(data.id, payload.collection_ids); }catch(e){ alert(e.message); return; }
+      const newPayload={...payload};
+      delete newPayload.collection_ids; // join-table links are not records columns
+      const {data,error}=await SB.from('records').upsert(newPayload,{onConflict:'user_id,shelf_id'}).select(FIELDS).single();
+      if(error){ showSaveError(error,'record'); return; }
+      try{ await syncRecordCollections(data.id, payload.collection_ids); }catch(e){
+        setSync('Save incomplete');
+        alert('Record fields saved, but collection assignments did not finish. Keep this form open and retry.\n'+explainError(e,'collection'));
+        return;
+      }
       data.collection_ids = payload.collection_ids;
       await logChange('record_add',null,data);
     }
-    closeForm(); await loadAll();
+    // Refresh the open detail in place after an edit, without forcing the user
+    // to close and reopen the modal. Preserve their active information tab.
+    const wasEditing=!!r;
+    const openDetails=wasEditing && $('#detOv')?.classList.contains('on');
+    const activeTab=openDetails ? ($('#fOv').dataset.returnTab || $('#detModal .ss-detail-tabs [role="tab"][aria-selected="true"]')?.dataset.ssTab) : null;
+    const savedId=r?.id;
+    closeForm();
+    if(!(await loadAll()))return;
+    if(openDetails && savedId){
+      const refreshedIndex=state.filtered.findIndex(x=>x.id===savedId);
+      if(refreshedIndex>=0){
+        openModal(refreshedIndex);
+        if(activeTab){
+          // The modal's V56 observer may reset tabs on edited title/code.
+          requestAnimationFrame(()=>$('#detModal .ss-detail-tabs [data-ss-tab="'+activeTab+'"]')?.click());
+        }
+      }else{
+        // A changed value may remove the record from the active filter.
+        closeModal();
+        setSync('Saved · record is outside the active filter');
+      }
+    }
   }
   window.saveRec=saveRec;
 
@@ -1294,6 +1458,7 @@
     const {error}=await SB.from('records').delete().eq('id',r.id).eq('user_id',state.user.id);
     if(error){ alert(error.message); return; }
     await logChange('record_delete',r,null);
+    if($('#fOv')?.classList.contains('on'))closeForm();
     closeModal(); await loadAll();
   }
   window.deleteCurrent=deleteCurrent;
@@ -1361,10 +1526,12 @@
   async function addCollection(){
     const name=$('#newCollectionName').value.trim(); if(!name) return;
     if(isRecordCabinet(name)){ alert('Record Cabinet is the implicit base collection and is not shown as a label.'); return; }
-    const id=name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-    const {error}=await SB.from('collections').upsert({id,name,user_id:state.user.id,locked:false},{onConflict:'user_id,id'});
-    if(error){ alert(error.message); return; }
-    $('#newCollectionName').value=''; await loadAll(); renderUserSettings();
+    if(state.collections.some(c=>c.name===name)){alert('This collection already exists.');return;}
+    try{
+      await getOrCreateCollection(name);
+      $('#newCollectionName').value='';
+      if(await loadAll())renderUserSettings();
+    }catch(e){showSaveError(e,'collection');}
   }
   window.addCollection=addCollection;
   async function renameCollection(id){
@@ -1400,20 +1567,20 @@
   function exportCsv(){
     const headers=['Shelf ID','Artist','Album','First name','Last name','Copies owned','Listened','Reaction','Grail','Collections','Genre','Year','Label','Country','Discogs URL','Cover URL','Notes','Tracklist'];
     const rows=recordsForExport().map(r=>[recordCode(r),r.artist,r.album,r.first,r.last,r.copies_owned,r.listened?'yes':'no',reactionValue(r),r.grail?'yes':'no',collectionExportName(r),r.genre,displayYear(r),r.label,r.country,r.discogs_url,coverUrl(r),r.note,tracks(r).map(t=>[t.position,t.title,t.duration].filter(Boolean).join(' | ')).join('\n')]);
-    downloadBlob(`dead-wax-collection-${new Date().toISOString().slice(0,10)}.csv`,'text/csv;charset=utf-8',[headers,...rows].map(row=>row.map(csvEscape).join(',')).join('\n'));
+    downloadBlob(`sleeveshelves-collection-${new Date().toISOString().slice(0,10)}.csv`,'text/csv;charset=utf-8',[headers,...rows].map(row=>row.map(csvEscape).join(',')).join('\n'));
   }
   window.exportCsv=exportCsv;
   function exportExcel(){
     const headers=['Shelf ID','Artist','Album','First name','Last name','Copies owned','Listened','Reaction','Grail','Collections','Genre','Year','Label','Country','Discogs URL','Cover URL','Notes'];
     const body=recordsForExport().map(r=>`<tr>${[recordCode(r),r.artist,r.album,r.first,r.last,r.copies_owned,r.listened?'yes':'no',reactionValue(r),r.grail?'yes':'no',collectionExportName(r),r.genre,displayYear(r),r.label,r.country,r.discogs_url,coverUrl(r),r.note].map(x=>`<td>${esc(x)}</td>`).join('')}</tr>`).join('');
     const html=`<!doctype html><html><head><meta charset="utf-8"><style>td,th{border:1px solid #999;padding:4px;font-family:Arial;font-size:11pt}th{background:#eee}</style></head><body><table><thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></body></html>`;
-    downloadBlob(`dead-wax-collection-${new Date().toISOString().slice(0,10)}.xls`,'application/vnd.ms-excel;charset=utf-8',html);
+    downloadBlob(`sleeveshelves-collection-${new Date().toISOString().slice(0,10)}.xls`,'application/vnd.ms-excel;charset=utf-8',html);
   }
   window.exportExcel=exportExcel;
   function exportPdf(){
     const w=window.open('','_blank');
     const rows=recordsForExport().map(r=>`<tr><td>${esc(recordCode(r))}</td><td>${esc(r.artist)}</td><td>${esc(r.album)}</td><td>${esc(collectionExportName(r))}</td><td>${esc(r.genre||'')}</td></tr>`).join('');
-    w.document.write(`<!doctype html><html><head><title>Dead Wax Collection</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#111}h1{font-family:Georgia,serif}table{border-collapse:collapse;width:100%}th,td{border-bottom:1px solid #ddd;text-align:left;padding:6px 8px;font-size:11px}th{background:#f2f2f2}.meta{color:#666;margin-bottom:18px}@media print{button{display:none}}</style></head><body><button onclick="window.print()">Save as PDF / Print</button><h1>Dead Wax Collection</h1><div class="meta">${state.records.length} records · exported ${new Date().toLocaleString()}</div><table><thead><tr><th>Shelf ID</th><th>Artist</th><th>Album</th><th>Collections</th><th>Genre</th></tr></thead><tbody>${rows}</tbody></table><script>setTimeout(()=>window.print(),400)<\/script></body></html>`);
+    w.document.write(`<!doctype html><html><head><title>SleeveShelves Collection</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#111}h1{font-family:Georgia,serif}table{border-collapse:collapse;width:100%}th,td{border-bottom:1px solid #ddd;text-align:left;padding:6px 8px;font-size:11px}th{background:#f2f2f2}.meta{color:#666;margin-bottom:18px}@media print{button{display:none}}</style></head><body><button onclick="window.print()">Save as PDF / Print</button><h1>SleeveShelves Collection</h1><div class="meta">${state.records.length} records · exported ${new Date().toLocaleString()}</div><table><thead><tr><th>Shelf ID</th><th>Artist</th><th>Album</th><th>Collections</th><th>Genre</th></tr></thead><tbody>${rows}</tbody></table><script>setTimeout(()=>window.print(),400)<\/script></body></html>`);
     w.document.close();
   }
   window.exportPdf=exportPdf;
@@ -1428,21 +1595,30 @@
     const valid=objects.map((o,i)=>({o,i:i+2,artist:getField(o,['artist','artist name','artis']),album:getField(o,['album','title','record','release'])})).filter(x=>x.artist.trim() && x.album.trim());
     if(!valid.length){ alert('Import needs at least Artist and Album columns. Shelf ID, First name and Last name are optional.'); return; }
     if(!confirm(`Import ${valid.length} records from CSV? Artist and Album are required; Shelf ID is optional.`)) return;
-    setSync('Importing CSV'); let ok=0, fail=0;
+    setSync('Importing CSV'); let ok=0, fail=0, partial=0; const failures=[];
+    const importedCollections=new Map(state.collections.map(c=>[c.name,c.id]));
     for(const {o,artist,album} of valid){
       const shelf=(getField(o,['shelf id','shelf_id','code','id'])||'').trim();
       const cols=(getField(o,['collections','collection','labels'])||'').split(/[|;]/).map(x=>x.trim()).filter(Boolean).filter(x=>!isRecordCabinet(x));
       const colIds=[];
-      for(const name of cols){ const id=name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''); if(!id) continue; const {error}=await SB.from('collections').upsert({id,name,user_id:state.user.id,locked:false},{onConflict:'user_id,id'}); if(!error) colIds.push(id); }
+      let collectionError=null;
+      for(const name of cols){
+        try{
+          let id=importedCollections.get(name);
+          if(!id){id=await getOrCreateCollection(name);importedCollections.set(name,id);}
+          colIds.push(id);
+        }catch(e){collectionError=e;break;}
+      }
+      if(collectionError){ fail++;failures.push((shelf||album)+' (collection: '+explainError(collectionError,'collection')+')');continue; }
       const payload={user_id:state.user.id,shelf_id:shelf||null,artist:artist.trim(),album:album.trim(),first:getField(o,['first','first name']).trim(),last:getField(o,['last','last name']).trim(),copies_owned:Number(getField(o,['copies','copies owned','owned'])||1),genre:getField(o,['genre']).trim(),discogs_url:getField(o,['discogs url','discogs','url']).trim(),note:getField(o,['notes','note']).trim(),collections:internalCollections(colIds),updated_at:new Date().toISOString()};
       let res=shelf ? await SB.from('records').upsert(payload,{onConflict:'user_id,shelf_id'}).select('id').single() : await SB.from('records').insert(payload).select('id').single();
-      if(res.error){ fail++; continue; }
-      try{ await syncRecordCollections(res.data.id,colIds); }catch(e){} ok++;
+      if(res.error){ fail++; failures.push(shelf||album); continue; }
+      try{ await syncRecordCollections(res.data.id,colIds); ok++; }catch(e){ partial++; failures.push((shelf||album)+' (collections)'); }
     }
-    await logChange('csv_import',null,{ok,fail,total:valid.length}); alert(`CSV import complete: ${ok} imported, ${fail} failed.`); event.target.value=''; await loadAll();
+    await logChange('csv_import',null,{ok,fail,partial,total:valid.length}); alert(`CSV import: ${ok} complete, ${partial} partially saved, ${fail} failed.\n${failures.length?'Review: '+failures.slice(0,12).join(', '):''}`); event.target.value=''; await loadAll();
   }
   window.handleImport=handleImport;
-  function exportDiscogsDb(){ alert('This Supabase-native build does not export dead_wax_db.js. Use CSV, Excel-compatible .xls, or PDF from Database settings.'); }
+  function exportDiscogsDb(){ alert('Your collection is stored in Supabase. Use Download CSV to create a backup.'); }
   window.exportDiscogsDb=exportDiscogsDb;
   function clearDgCache(){ alert('No record cache is used as source of truth in this native build.'); }
   window.clearDgCache=clearDgCache;
@@ -1474,7 +1650,7 @@
   function ensureDatabaseTools(){
     const panel=$('#userPanelDatabase .settings-section');
     if(panel && !$('#dwExportTools')){
-      panel.insertAdjacentHTML('beforeend',`<div class="s-btns" id="dwExportTools"><button type="button" class="btn-sec" onclick="exportCsv()">Download CSV</button><button type="button" class="btn-sec" onclick="exportExcel()">Download Excel</button><button type="button" class="btn-sec" onclick="exportPdf()">Download PDF</button><button type="button" class="btn-sec" onclick="document.getElementById('importFile').click()">Upload CSV</button></div><div class="tip">CSV import requires Artist and Album. Shelf ID, First name and Last name are optional. Extra columns such as Collection, Genre, Discogs URL, Notes and Copies are used when present.</div>`);
+      panel.insertAdjacentHTML('beforeend',`<div class="s-btns" id="dwExportTools"><button type="button" class="btn-sec" onclick="exportCsv()">Download CSV</button><button type="button" class="btn-sec" onclick="exportExcel()">Excel-compatible .xls</button><button type="button" class="btn-sec" onclick="exportPdf()">Print / Save PDF</button><button type="button" class="btn-sec" onclick="document.getElementById('importFile').click()">Upload CSV</button></div><div class="tip">CSV import requires Artist and Album. Shelf ID, First name and Last name are optional. Extra columns such as Collection, Genre, Discogs URL, Notes and Copies are used when present.</div>`);
     }
     const f=$('#importFile'); if(f) f.setAttribute('accept','.csv,.txt');
   }
@@ -1500,7 +1676,7 @@
     $('#fRating')?.addEventListener('change',e=>{state.filters.rating=e.target.value; applyFilters();});
     $('#fLastListened')?.addEventListener('change',e=>{state.filters.lastListened=e.target.value; applyFilters();});
     $('#fGrail')?.addEventListener('change',e=>{state.filters.grail=e.target.checked; applyFilters();});
-    $('#btnClr')?.addEventListener('click',()=>{ state.filters={global:'', code:'', artist:'', last:'', first:'', album:'', genre:'', listened:false, doubles:false, rating:'', lastListened:'', grail:false}; ['gSearch','fCode','fArtist','fLast','fFirst','fAlbum'].forEach(id=>$('#'+id)&&( $('#'+id).value='' )); ['fGenre','fRating','fLastListened'].forEach(id=>$('#'+id)&&($('#'+id).value='')); ['fListened','fDoubles','fGrail'].forEach(id=>$('#'+id)&&($('#'+id).checked=false)); applyFilters(); });
+    $('#btnClr')?.addEventListener('click',()=>{ state.filters={collectionId:'', global:'', code:'', artist:'', last:'', first:'', album:'', genre:'', listened:false, doubles:false, rating:'', lastListened:'', grail:false}; ['gSearch','fCode','fArtist','fLast','fFirst','fAlbum'].forEach(id=>$('#'+id)&&( $('#'+id).value='' )); ['fGenre','fRating','fLastListened'].forEach(id=>$('#'+id)&&($('#'+id).value='')); ['fListened','fDoubles','fGrail'].forEach(id=>$('#'+id)&&($('#'+id).checked=false)); applyFilters(); });
     $('#filterToggle')?.addEventListener('click',()=>{ const d=$('#filterDrawer'), b=$('#filterToggle'); d.classList.toggle('on'); b.setAttribute('aria-expanded',String(d.classList.contains('on'))); updateHdrH(); });
     $('#groupSelect')?.addEventListener('change',e=>setGroup(e.target.value));
     $('#secondaryGroupSelect')?.addEventListener('change',e=>setSecondaryGroup(e.target.value));
