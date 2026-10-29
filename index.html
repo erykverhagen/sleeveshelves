@@ -19,7 +19,7 @@ try{
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/deadwax-static-v43.css?v=43-listening-diary">
+<link rel="stylesheet" href="css/deadwax-static-v43.css?v=61.4.2-full">
 <style id="dw-login-turntable-v10">
 html body .dw-auth{align-items:stretch!important;justify-content:stretch!important;padding:0!important;background:linear-gradient(135deg,#1d1309 0%,#0b0805 48%,#050302 100%)!important;overflow:hidden!important}
 html body .dw-auth::before{inset:0!important;background:radial-gradient(circle at 16% 50%,rgba(240,195,79,.16),transparent 32%),radial-gradient(circle at 80% 82%,rgba(208,154,36,.10),transparent 28%),linear-gradient(115deg,rgba(244,234,210,.035),transparent 38%,rgba(0,0,0,.28))!important;z-index:1!important}
@@ -69,9 +69,9 @@ html body .dw-auth-panel::before,html body .dw-auth-panel::after{content:none!im
 @media(max-width:520px){html body .dw-deck{left:-92vmin!important;top:28%!important;width:168vmin!important;height:168vmin!important;min-width:560px!important;min-height:560px!important}}
 </style>
 
-<link rel="stylesheet" href="css/deadwax-turntable-v45.css?v=45.3-arm-geometry">
-<link rel="stylesheet" href="css/deadwax-spotify-v45.css?v=45.0">
-<link rel="stylesheet" href="css/sleeveshelves-v61.css?v=61.3-ux">
+<link rel="stylesheet" href="css/deadwax-turntable-v45.css?v=61.4.2-full">
+<link rel="stylesheet" href="css/deadwax-spotify-v45.css?v=61.4.2-full">
+<link rel="stylesheet" href="css/sleeveshelves-v61.css?v=61.4.2-full">
 <body class="ss-app-mode">
 <a class="skip-link" href="#mainArea">Skip to collection</a>
 <div id="ssApp" class="ss-app">
@@ -360,15 +360,17 @@ html body .dw-auth-panel::before,html body .dw-auth-panel::after{content:none!im
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
-<script src="js/deadwax-native-exact-v43.js?v=61.4-reliability"></script>
-<script src="js/deadwax-turntable-v45.js?v=57.0-receiver"></script>
-<script src="js/deadwax-spotify-v45.js?v=61.4.1-redirect"></script>
-<script src="js/sleeveshelves-v46.js?v=46.1"></script>
-<script src="js/sleeveshelves-v50.js?v=50.0"></script>
-<script src="js/sleeveshelves-v56.js?v=56.0"></script>
-<script src="js/sleeveshelves-v57.js?v=57.0"></script>
-<script src="js/sleeveshelves-v58.js?v=58.0"></script>
-<script src="js/sleeveshelves-grail-v60.js?v=61.0-grail"></script>
-<script src="js/sleeveshelves-accessibility-v61_3.js?v=61.3"></script>
+<script src="js/sleeveshelves-app-v61_4_2.js?v=61.4.2-full"></script>
+<script>
+// Deployment integrity guard. Does not touch authentication or stored data.
+window.addEventListener('load', () => {
+  if (window.DW_NATIVE && document.querySelector('.ss-browse-bar') && document.querySelector('.ss56-content')) return;
+  const notice=document.createElement('div');
+  notice.setAttribute('role','alert');
+  notice.style.cssText='position:fixed;z-index:2147483647;bottom:1rem;left:1rem;right:1rem;max-width:670px;margin:auto;padding:1rem 1.2rem;border:1px solid #e7b56a;border-radius:12px;background:#201208;color:#f4ead2;box-shadow:0 10px 40px #0009;font:14px/1.5 system-ui,sans-serif';
+  notice.textContent='SleeveShelves did not finish loading. The website files may be incomplete. Check GitHub Pages deployment and refresh. Your Supabase collection is not affected.';
+  document.body.appendChild(notice);
+});
+</script>
 </body>
 </html>

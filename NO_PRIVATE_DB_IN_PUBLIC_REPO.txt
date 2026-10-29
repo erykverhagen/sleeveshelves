@@ -1,1 +1,0 @@
-Do not commit dead_wax_db.js or private database exports. Supabase is the source of truth.
