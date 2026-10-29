@@ -1,0 +1,1 @@
+SleeveShelves V61.4.7 — compact top-toolbar Now Spinning (no sidebar turntable); Listened sidebar: Vinyl / Digital / Both, driven by RLS-protected digital_listening_events. Spotify connection warnings, autoplay and physical listening remain unchanged. No new SQL; V61.4.3 Digital Listening Diary migration must already be installed.

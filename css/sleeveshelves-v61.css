@@ -4066,3 +4066,98 @@ html body.ss-app-mode #ssDigitalDiaryStatus{font-size:12px;color:#deb785;line-he
 html body.ss-app-mode .ss-diary-entry{display:flex;gap:6px;justify-content:space-between;align-items:start;border-top:1px solid rgba(231,181,106,.12);padding:10px 0;font-size:12px;line-height:1.4}
 html body.ss-app-mode .ss-diary-entry strong{font-weight:550;overflow-wrap:anywhere;color:#f0d9b8}
 html body.ss-app-mode .ss-diary-entry span{white-space:nowrap;font-size:10px;color:#c9a47d}
+
+
+/* ---- V61.4.4: approved sidebar turntable, header tools, unchanged browse modes ---- */
+/* Modern three-mode toolbar remains visible. Cover Flow is a button, never a strip above Grid. */
+/* Original sidebar width is preserved; the vinyl scales inside it. */
+html body.ss-app-mode.ss56-modal-app #ssNav .ss-brand-row{justify-content:flex-start!important;gap:10px!important}
+html body.ss-app-mode.ss56-modal-app #ssNav #ssSidebarHamburger{order:0!important;flex-shrink:0!important}
+html body.ss-app-mode.ss56-modal-app #ssNav #ssBrandHome{order:1!important;flex:1!important}
+html body.ss-app-mode.ss56-modal-app #hdr .h-right{
+  display:flex!important;align-items:center!important;justify-content:flex-end!important;
+  flex-wrap:nowrap!important;gap:9px!important;min-width:0!important;
+}
+html body.ss-app-mode.ss56-modal-app #hdr #countPill{display:none!important}
+html body.ss-app-mode.ss56-modal-app #hdr .vtog{
+  display:flex!important;align-items:center!important;flex:0 0 auto!important;
+  padding:4px!important;gap:2px!important;
+}
+html body.ss-app-mode.ss56-modal-app #hdr .vtog .vbtn{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  width:34px!important;height:38px!important;min-width:34px!important;opacity:1!important;
+}
+html body.ss-app-mode.ss56-modal-app #hdr #filterToggle{
+  display:inline-flex!important;flex:0 0 42px!important;
+  align-items:center!important;justify-content:center!important;min-height:42px!important;
+}
+html body.ss-app-mode.ss56-modal-app #hdr .ss6144-header-setting{
+  appearance:none;display:grid!important;place-items:center!important;box-sizing:border-box!important;
+  flex:0 0 42px!important;width:42px!important;height:42px!important;
+  color:#edd6b9!important;background:rgba(60,35,22,.60)!important;
+  border:1px solid rgba(234,174,100,.25)!important;border-radius:11px!important;cursor:pointer;
+}
+html body.ss-app-mode.ss56-modal-app #hdr .ss6144-header-setting svg{width:19px!important;height:19px!important}
+html body.ss-app-mode.ss56-modal-app #hdr #userMenuWrap.ss6144-header-profile{
+  position:relative!important;display:block!important;flex:0 0 42px!important;
+  width:42px!important;height:42px!important;margin:0!important;
+}
+html body.ss-app-mode.ss56-modal-app #hdr .ss6144-header-profile #userMenuBtn{
+  display:grid!important;place-items:center!important;box-sizing:border-box!important;
+  width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;
+  padding:0!important;border:1px solid rgba(234,174,100,.35)!important;
+  background:rgba(60,35,22,.68)!important;border-radius:50%!important;color:#f1d6b0!important;
+}
+html body.ss-app-mode.ss56-modal-app #hdr .ss6144-header-profile #userMenuBtn svg{width:19px!important;height:19px!important}
+html body.ss-app-mode.ss56-modal-app #hdr .ss6144-header-profile #userMenu{
+  display:none;position:absolute!important;left:auto!important;right:0!important;top:calc(100% + 8px)!important;
+  bottom:auto!important;min-width:192px!important;z-index:999!important;
+  background:#28170f!important;border:1px solid rgba(236,180,105,.36)!important;
+  border-radius:11px!important;box-shadow:0 20px 50px rgba(0,0,0,.55)!important;
+}
+html body.ss-app-mode.ss56-modal-app #hdr .ss6144-header-profile #userMenu.on{display:block!important}
+html body.ss-app-mode.ss56-modal-app #ssNav .ss-nav-footer{display:none!important}
+/* V61.4.6 · Explicit Spotify connection / silent-preview selection. */
+.ss6146-spotify-backdrop{position:fixed;inset:0;z-index:20000;display:flex;align-items:center;justify-content:center;background:rgba(6,3,1,.72);backdrop-filter:blur(7px);padding:20px}
+.ss6146-spotify-dialog{width:min(410px,100%);color:#f1dfbf;background:linear-gradient(155deg,#392111,#1b1009 65%,#130b06);border:1px solid rgba(226,163,84,.48);border-radius:18px;padding:20px 22px 23px;box-shadow:0 30px 90px rgba(0,0,0,.62),inset 0 1px 0 rgba(255,255,255,.065);font-family:inherit}
+.ss6146-spotify-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ss6146-spotify-kicker{font-size:10px;letter-spacing:.18em;font-weight:700;color:#edb36b}
+.ss6146-spotify-close{border:1px solid rgba(240,190,120,.28);border-radius:50%;width:30px;height:30px;display:grid;place-items:center;background:transparent;color:#f1dfbf;cursor:pointer;font-size:20px}
+.ss6146-spotify-dialog h3{font:600 29px/1.06 'Cormorant Garamond',Georgia,serif;margin:12px 0 9px;color:#f4c883}
+.ss6146-spotify-dialog p{font-size:13px;line-height:1.55;color:#ddc4a4;margin:0 0 18px}
+.ss6146-spotify-actions{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:15px}
+.ss6146-spotify-actions button{flex:1 1 150px;min-height:42px;border-radius:11px;font-size:12px;font-weight:750;cursor:pointer;font-family:inherit}
+.ss6146-connect{border:1px solid #f6c181;background:#efb365;color:#261207}
+.ss6146-preview{background:transparent;color:#f2dbb5;border:1px solid rgba(233,177,109,.4)}
+.ss6146-spotify-dialog small{display:block;color:#b6a084;line-height:1.5;font-size:11px}
+.ss6146-spotify-dialog button:focus-visible,.ss6146-error-connect:focus-visible{outline:2px solid #fff2cf;outline-offset:3px}
+#dw45PlaybackError .ss6146-error-connect{margin-left:10px;cursor:pointer;border:1px solid #f0bd74;background:#f0bd74;border-radius:7px;padding:6px 10px;color:#211307;font-size:12px;font-weight:700}
+@media(max-width:430px){.ss6146-spotify-backdrop{padding:12px}.ss6146-spotify-dialog{padding:18px 16px}.ss6146-spotify-dialog h3{font-size:26px}}
+
+
+/* V61.4.7: compact top-toolbar player and Listened source modes. */
+html body.ss-app-mode.ss56-modal-app #ssNav #ss6144SidebarPlayer{display:none!important}
+html body.ss-app-mode.ss56-modal-app #ssWorkspace>.ss-browse-bar{min-height:55px!important}
+html body.ss-app-mode.ss56-modal-app .ss-browse-bar #ss57Receiver:not([hidden]){display:flex!important;visibility:visible!important}
+html body.ss-app-mode.ss56-modal-app .ss-browse-bar #ss57Receiver .ss57-artist{
+ display:block!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+ font:400 10px/1.25 Jost,sans-serif!important;color:#d0aa84!important;
+}
+html body.ss-app-mode.ss56-modal-app .ss-browse-bar #ss57Receiver .ss57-album{line-height:1.1!important}
+html body.ss-app-mode.ss56-modal-app .ss-browse-bar #ss57Receiver .ss57-track{font-size:10px!important;color:#e2c9a8!important}
+html body.ss-app-mode.ss56-modal-app .ss-browse-bar #ss57Receiver [data-ss57="stop"],
+html body.ss-app-mode.ss56-modal-app .ss-browse-bar #ss57Receiver .ss57-reopen{display:none!important}
+html body.ss-app-mode.ss56-modal-app .ss-browse-bar #ss57Receiver .ss57-hardware{margin-left:auto!important;flex:0 0 36px!important}
+html body.ss-app-mode.ss56-modal-app .ss-browse-bar #ss57Receiver:not([hidden]){flex:0 1 440px!important;min-width:240px!important;max-width:440px!important}
+@media(max-width:1390px){html body.ss-app-mode.ss56-modal-app .ss-browse-bar #ss57Receiver:not([hidden]){flex:1 1 300px!important;min-width:200px!important;max-width:none!important}}
+@media(max-width:940px){html body.ss-app-mode.ss56-modal-app .ss-browse-bar #ss57Receiver:not([hidden]){flex:1 1 100%!important;min-width:0!important}}
+/* The list of listened records is filtered to records, never individual Spotify tracks. */
+html body.ss-app-mode #ss6147ListenModes{margin:2px 9px 10px 18px;padding:4px 5px 5px 8px;border-left:1px solid rgba(226,165,91,.24)}
+html body.ss-app-mode #ss6147ListenModes[hidden]{display:none!important}
+html body.ss-app-mode #ss6147ListenModes{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+html body.ss-app-mode #ss6147ListenModes button{flex:1 1 0;min-width:0;border:1px solid rgba(239,174,96,.15);background:rgba(120,72,38,.13);color:#c5a387;border-radius:7px;min-height:32px;padding:6px 4px;font:600 10px/1 Jost,sans-serif;cursor:pointer}
+html body.ss-app-mode #ss6147ListenModes button.is-active,
+html body.ss-app-mode #ss6147ListenModes button[aria-pressed="true"]{color:#281409;background:#eabb79;border-color:#f1c58a}
+html body.ss-app-mode #ss6147ListenModes button:focus-visible{outline:2px solid #f2c082;outline-offset:2px}
+html body.ss-app-mode #ss6147ListenStatus{flex:1 0 100%;margin:4px 0 0;color:#d5aa79;font:400 10px/1.4 Jost,sans-serif;min-height:0}
+html body.ss-app-mode #ssApp.ss-nav-min #ss6147ListenModes{display:none!important}

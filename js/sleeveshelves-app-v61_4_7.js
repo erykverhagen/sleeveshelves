@@ -18,6 +18,11 @@
     records: [],
     collections: [],
     collectionLinks: [],
+    digitalListenedIds: new Set(),
+    digitalListensLoaded: false,
+    digitalListensError: '',
+    listenedViewMode: 'both',
+    digitalListensRequest: 0,
     filtered: [],
     view: 'grid',
     group: 'shelf',
@@ -600,7 +605,7 @@
 
   async function signOut(){
     await SB.auth.signOut();
-    state.user=null; state.records=[]; state.filtered=[]; render();
+    state.user=null; state.records=[]; state.filtered=[];state.digitalListenedIds.clear();state.digitalListensLoaded=false;state.digitalListensError='';++state.digitalListensRequest; render();
     $('#dwAuth').classList.add('on');
     closeUserMenu();
   }
@@ -688,7 +693,7 @@
     if(f.first) a=a.filter(r=>norm(r.first).includes(norm(f.first)));
     if(f.album) a=a.filter(r=>norm(r.album).includes(norm(f.album)));
     if(f.genre) a=a.filter(r=>(r.genre===f.genre || r.genres?.includes(f.genre)));
-    if(f.listened) a=a.filter(r=>!!r.listened);
+    if(f.listened) a=a.filter(r=>state.listenedViewMode==='vinyl' ? !!r.listened : state.listenedViewMode==='digital' ? state.digitalListenedIds.has(r.id) : (!!r.listened || state.digitalListenedIds.has(r.id)));
     if(f.doubles) a=a.filter(r=>Number(r.copies_owned||r.owned||1)>1);
     if(f.grail) a=a.filter(r=>!!r.grail);
     if(f.rating) a=a.filter(r=>reactionValue(r)===f.rating);
@@ -716,6 +721,53 @@
     favorites:state.records.filter(r=>reactionValue(r)==='favorite').length
   });
   DW.setCollectionFilter=(id)=>{ state.filters.collectionId=id||''; applyFilters(); };
+  // V61.4.7: digital history is queried with the authenticated client's RLS.
+  // Vinyl and digital are record-level filters, not additional playback counters.
+  DW.getListenedMode=()=>state.listenedViewMode;
+  DW.getDigitalListenStatus=()=>({loaded:state.digitalListensLoaded,error:state.digitalListensError,count:state.digitalListenedIds.size});
+  DW.setListenedMode=mode=>{
+    if(!['vinyl','digital','both'].includes(mode))return;
+    state.listenedViewMode=mode;
+    applyFilters();
+  };
+  DW.refreshDigitalListened=async()=>{
+    const user=state.user; if(!user)return false;
+    const request=++state.digitalListensRequest;
+    state.digitalListensError='';
+    state.digitalListensLoaded=false;
+    const ids=new Set();
+    try{
+      // Pagination avoids PostgREST's default 1,000-row limit on a long diary.
+      const size=1000;
+      for(let offset=0;offset<100000;offset+=size){
+        const res=await SB.from('digital_listening_events').select('record_id')
+          .eq('user_id',user.id).range(offset,offset+size-1);
+        if(res.error)throw res.error;
+        if(request!==state.digitalListensRequest || state.user?.id!==user.id)return false;
+        const rows=res.data||[];
+        for(const row of rows)if(row.record_id)ids.add(row.record_id);
+        if(rows.length<size)break;
+        if(offset+size>=100000)throw new Error('Digital listening history exceeds the query limit.');
+      }
+      if(request!==state.digitalListensRequest || state.user?.id!==user.id)return false;
+      state.digitalListenedIds=ids;
+      state.digitalListensLoaded=true;
+      applyFilters();
+      window.dispatchEvent(new Event('sleeveshelves:digital-filter-ready'));
+      return true;
+    }catch(error){
+      if(request!==state.digitalListensRequest)return false;
+      state.digitalListensError=String(error.message||error||'Cannot load digital listening history');
+      state.digitalListensLoaded=false;
+      console.warn('Unable to filter digital listening history:',error);
+      window.dispatchEvent(new Event('sleeveshelves:digital-filter-ready'));
+      return false;
+    }
+  };
+  window.addEventListener('sleeveshelves:digital-listen-saved',event=>{
+    const id=event.detail?.recordId;
+    if(id){state.digitalListenedIds.add(id);if(state.filters.listened)applyFilters();}
+  });
 
 
   function groupRecords(arrIn){
@@ -1674,7 +1726,7 @@
     $('#gSearch')?.addEventListener('input',e=>{ state.filters.global=e.target.value; renderSearchFlyout(e.target.value); applyFilters(); });
     [['fCode','code'],['fArtist','artist'],['fLast','last'],['fFirst','first'],['fAlbum','album']].forEach(([id,k])=>$('#'+id)?.addEventListener('input',e=>{state.filters[k]=e.target.value; applyFilters();}));
     $('#fGenre')?.addEventListener('change',e=>{state.filters.genre=e.target.value; applyFilters();});
-    $('#fListened')?.addEventListener('change',e=>{state.filters.listened=e.target.checked; applyFilters();});
+    $('#fListened')?.addEventListener('change',e=>{state.filters.listened=e.target.checked; if(e.target.checked && $('#ss6147ListenModes')?.hidden)state.listenedViewMode='vinyl'; applyFilters();});
     $('#fDoubles')?.addEventListener('change',e=>{state.filters.doubles=e.target.checked; applyFilters();});
     $('#fRating')?.addEventListener('change',e=>{state.filters.rating=e.target.value; applyFilters();});
     $('#fLastListened')?.addEventListener('change',e=>{state.filters.lastListened=e.target.value; applyFilters();});
@@ -1862,17 +1914,75 @@
   }
   function showPlaybackError(error) {
     const message = error?.message || String(error || 'Unknown playback error');
-    console.warn('Dead Wax Digital Turntable:',message);
+    console.warn('SleeveShelves Digital Turntable:',message);
     let node = $('#dw45PlaybackError');
     if (!node) { node=document.createElement('div'); node.id='dw45PlaybackError'; node.setAttribute('role','alert'); document.body.append(node); }
-    node.textContent = `Digital turntable: ${message}`;
+    const premium = /(?:premium|account_error|Spotify\s*403)/i.test(message);
+    const needsLogin = !premium && /(?:Spotify\s*401|authorization failed|invalid.grant|token.*expired|session.*expired|unauthorized|not authenticated|connect.*spotify|authentication.error|permission.*denied)/i.test(message);
+    node.replaceChildren();
+    const content=document.createElement('span');
+    content.textContent = needsLogin ? 'Spotify needs to be reconnected before audio playback.' :
+      premium ? 'Spotify Premium is required for browser playback.' :
+      'Spotify could not start playback: '+message;
+    node.append(content);
+    if (needsLogin) {
+      const btn=document.createElement('button');btn.type='button';btn.className='ss6146-error-connect';btn.textContent='Reconnect Spotify';
+      btn.addEventListener('click',()=>window.DW_SPOTIFY_V45?.connect?.().catch(showPlaybackError));
+      node.append(btn);
+    }
     node.hidden = false;
-    window.setTimeout(() => { if (node.textContent.endsWith(message)) node.hidden = true; },12000);
+    const snapshot=content.textContent;
+    window.setTimeout(() => { if (node.querySelector('span')?.textContent===snapshot) node.hidden = true; },16000);
   }
-  async function startSide(side) {
+  // Do not silently switch from real Spotify audio to an animated silent record.
+  // Demo playback is available only after the collector explicitly chooses it.
+  let spotifyPromptFocus=null;
+  function closeSpotifyPrompt(){
+    const prompt=$('#ss6146SpotifyPrompt');if(!prompt)return;
+    prompt.remove();spotifyPromptFocus?.focus?.();spotifyPromptFocus=null;
+  }
+  function showSpotifyPrompt(side){
+    if($('#ss6146SpotifyPrompt'))return;
+    spotifyPromptFocus=document.activeElement;
+    const prompt=document.createElement('div');prompt.id='ss6146SpotifyPrompt';prompt.className='ss6146-spotify-backdrop';
+    prompt.setAttribute('role','presentation');
+    const dialog=document.createElement('div');dialog.className='ss6146-spotify-dialog';dialog.setAttribute('role','dialog');
+    dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-labelledby','ss6146SpotifyTitle');
+    const header=document.createElement('div');header.className='ss6146-spotify-head';
+    const status=document.createElement('span');status.className='ss6146-spotify-kicker';status.textContent='DIGITAL TURNTABLE';
+    const close=document.createElement('button');close.type='button';close.className='ss6146-spotify-close';
+    close.setAttribute('aria-label','Close Spotify connection prompt');close.textContent='×';
+    header.append(status,close);
+    const title=document.createElement('h3');title.id='ss6146SpotifyTitle';title.textContent='Spotify is not connected';
+    const detail=document.createElement('p');detail.textContent='Connect Spotify to hear this record. You can also explore the spinning turntable without audio.';
+    const buttons=document.createElement('div');buttons.className='ss6146-spotify-actions';
+    const connect=document.createElement('button');connect.type='button';connect.className='ss6146-connect';connect.textContent='Connect Spotify';
+    const preview=document.createElement('button');preview.type='button';preview.className='ss6146-preview';preview.textContent='Silent preview';
+    const note=document.createElement('small');note.textContent='Spotify Premium is required for browser audio. Silent previews are never logged as digital listens.';
+    buttons.append(connect,preview);dialog.append(header,title,detail,buttons,note);prompt.append(dialog);document.body.append(prompt);
+    const onKey=(event)=>{if(event.key==='Escape'){event.preventDefault();closeSpotifyPrompt();}if(event.key==='Tab'){
+      const items=[close,connect,preview];const idx=items.indexOf(document.activeElement);
+      if(event.shiftKey&&idx<=0){event.preventDefault();preview.focus();}
+      else if(!event.shiftKey&&idx===items.length-1){event.preventDefault();close.focus();}
+    }};
+    prompt.addEventListener('keydown',onKey);
+    prompt.addEventListener('click',event=>{if(event.target===prompt)closeSpotifyPrompt();});
+    close.addEventListener('click',closeSpotifyPrompt);
+    connect.addEventListener('click',()=>{
+      const action=window.DW_SPOTIFY_V45?.connect;
+      if(typeof action!=='function'){title.textContent='Spotify is unavailable';detail.textContent='Reload SleeveShelves to initialize its Spotify integration.';return;}
+      connect.disabled=true;connect.textContent='Connecting…';
+      Promise.resolve().then(()=>action()).catch(error=>{connect.disabled=false;connect.textContent='Connect Spotify';showPlaybackError(error);});
+    });
+    preview.addEventListener('click',()=>{closeSpotifyPrompt();void startSide(side,{silentPreview:true});});
+    connect.focus();
+  }
+  async function startSide(side,options={}) {
     const record = tracksFromDetail();
     if (!eligible() || !record || !record.sides[side]?.length) return;
-    const op=++operationId, adapter=activeProvider();
+    const spotify=providers.get('spotify');
+    if (!options.silentPreview && !spotify?.isConnected?.()) {showSpotifyPrompt(side);return;}
+    const op=++operationId, adapter=options.silentPreview ? demo : spotify;
     // Never silently fall back to a demo when an active Spotify session cannot play.
     try {
       if (adapter.prepare) await adapter.prepare({record,side,tracks:record.sides[side]});
@@ -2979,6 +3089,41 @@
  const navList=$('#ssNavCollections');
  const main=$('#mainArea');
  let lastCollection='', lastNav='all', lastRecord='', drawing=false;
+ const listenedButton=$('.ss-nav-item[data-ss-nav="listened"]');
+ const listenedModes=document.createElement('div');
+ listenedModes.id='ss6147ListenModes';
+ listenedModes.className='ss6147-listen-modes';
+ listenedModes.hidden=true;
+ listenedModes.setAttribute('role','group');
+ listenedModes.setAttribute('aria-label','Show records listened to on vinyl, digitally, or either');
+ for(const [mode,label] of [['vinyl','Vinyl'],['digital','Digital'],['both','Both']]){
+   const b=document.createElement('button');b.type='button';b.dataset.ssListenMode=mode;b.textContent=label;
+   b.setAttribute('aria-pressed',String(mode==='both'));listenedModes.append(b);
+ }
+ const listenedStatus=document.createElement('p');
+ listenedStatus.id='ss6147ListenStatus';listenedStatus.className='ss6147-listen-status';listenedStatus.setAttribute('role','status');
+ listenedModes.append(listenedStatus);
+ listenedButton?.insertAdjacentElement('afterend',listenedModes);
+ function updateListenModes(){
+   listenedModes.hidden=lastNav!=='listened';
+   const mode=api.getListenedMode?.()||'both';
+   for(const b of listenedModes.querySelectorAll('[data-ss-listen-mode]')){
+     const on=b.dataset.ssListenMode===mode;
+     b.classList.toggle('is-active',on);b.setAttribute('aria-pressed',String(on));
+   }
+   const state=api.getDigitalListenStatus?.();
+   listenedStatus.textContent=lastNav!=='listened'||mode==='vinyl'?'':
+     state?.error ? 'Digital history could not load. Check the Listening Diary connection.' :
+     !state?.loaded ? 'Loading digital listens…' :
+     state.count ? `${state.count} digitally played ${state.count===1?'record':'records'}` : 'No digital listens logged yet';
+ }
+ listenedModes.addEventListener('click',event=>{
+   const b=event.target.closest('[data-ss-listen-mode]');if(!b)return;
+   api.setListenedMode?.(b.dataset.ssListenMode);
+   updateListenModes();
+   if(b.dataset.ssListenMode!=='vinyl'&&!api.getDigitalListenStatus?.().loaded)void api.refreshDigitalListened?.();
+ });
+ window.addEventListener('sleeveshelves:digital-filter-ready',updateListenModes);
  const escaped=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  // Move existing, fully functional Settings/Sign out menu to the lower-left.
  const menu=$('#userMenuWrap');
@@ -3017,12 +3162,19 @@
  function resetFilters(){ $('#btnClr')?.click(); }
  function navigate(k){
   if(k==='discover'){window.randomize?.();return;}
+  if(k==='listened' && app.classList.contains('ss-nav-min'))setNavMin(false);
   resetFilters();
-  if(k==='listened'){$('#fListened').checked=true;$('#fListened').dispatchEvent(new Event('change',{bubbles:true}));}
+  if(k==='listened'){
+    $('#fListened').checked=true;$('#fListened').dispatchEvent(new Event('change',{bubbles:true}));
+    api.setListenedMode?.('both');
+    void api.refreshDigitalListened?.();
+  }
   else if(k==='favorites'){$('#fRating').value='favorite';$('#fRating').dispatchEvent(new Event('change',{bubbles:true}));}
   else if(k==='grails'){$('#fGrail').checked=true;$('#fGrail').dispatchEvent(new Event('change',{bubbles:true}));}
   else if(k.startsWith('collection:')){api.setCollectionFilter?.(k.slice(11));}
-  setSelected(k);renderNav();main?.scrollTo({top:0});
+  setSelected(k);renderNav();updateListenModes();main?.scrollTo({top:0});
+  // On phones, leave the listened picker open, but close the drawer for other destinations.
+  if(window.innerWidth<=780 && k!=='listened' && !app.classList.contains('ss-nav-min'))setNavMin(true);
  }
  $$('.ss-nav-item[data-ss-nav]').forEach(btn=>btn.addEventListener('click',()=>navigate(btn.dataset.ssNav)));
  $('#ssBrandHome')?.addEventListener('click',()=>navigate('all'));
@@ -3038,7 +3190,7 @@
   const heading=$('#ssVisibleHeading');
   if(heading){
    const selected=list.find(c=>lastNav==='collection:'+c.id);
-   heading.textContent=selected?.name||(lastNav==='favorites'?'Favorites':lastNav==='listened'?'Listened records':lastNav==='grails'?'Grail records':'Your collection');
+   heading.textContent=selected?.name||(lastNav==='favorites'?'Favorites':lastNav==='listened'?`Listened · ${(api.getListenedMode?.()||'both')==='vinyl'?'Vinyl':(api.getListenedMode?.()||'both')==='digital'?'Digital':'Both'}`:lastNav==='grails'?'Grail records':'Your collection');
   }
  }
  function syncRecordPanel(){
@@ -3080,7 +3232,7 @@
  }
  // Original jump bar, if visible, is scoped to the scrolling workspace.
  const jump=$('#jumpBar'); if(jump)$('#ssWorkspace').append(jump);
- renderNav();syncRecordPanel();
+ renderNav();updateListenModes();syncRecordPanel();
 })();
 
 
@@ -3402,6 +3554,7 @@
     <div class="ss57-tuner" aria-live="polite" aria-atomic="true">
       <div class="ss57-tuner-top"><span class="ss57-diode" aria-hidden="true"></span><span class="ss57-tuner-caption">NOW SPINNING</span><span class="ss57-side">SIDE A</span></div>
       <strong class="ss57-album"></strong>
+      <span class="ss57-artist"></span>
       <div class="ss57-track-line"><span class="ss57-track"></span><span class="ss57-track-vu" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></div>
     </div>
     <div class="ss57-hardware" aria-label="Mini receiver controls">
@@ -3425,6 +3578,7 @@
     $('.ss57-tuner-caption',receiver).textContent=state.status==='playing'?'NOW SPINNING':state.status==='loading'?'CUEING RECORD':'NEEDLE LIFTED';
     $('.ss57-side',receiver).textContent='SIDE '+(state.side||'A');
     $('.ss57-album',receiver).textContent=state.album||'Untitled record';
+    $('.ss57-artist',receiver).textContent=state.artist||'';
     $('.ss57-track',receiver).textContent=state.currentTrack?.title||state.artist||'Ready';
     const cover=state.cover||'';
     if(cover!==lastCover){
@@ -3752,6 +3906,7 @@
           const saved=await db.from('digital_listening_events').upsert(row,{onConflict:'user_id,session_key',ignoreDuplicates:true});
           if(saved.error)throw saved.error;
           t.logged=true;
+          window.dispatchEvent(new CustomEvent('sleeveshelves:digital-listen-saved',{detail:{recordId:record.data.id}}));
           if(displayedShelf===d.shelfId)await refresh(displayedShelf);
         }catch(error){
           console.warn('Could not save digital listen:',error);
@@ -3762,3 +3917,31 @@
   });
 })();
 
+
+
+/* MODULE: SleeveShelves V61.4.7 header controls and toolbar receiver.
+ * The one V57 receiver is rendered in the browse toolbar, not in the sidebar.
+ */
+(()=>{
+ 'use strict';
+ const $=(s,r=document)=>r.querySelector(s);
+ const brandRow=$('#ssNav .ss-brand-row'),hamburger=$('#ssSidebarHamburger');
+ const header=$('#hdr .h-right');
+ if(brandRow&&hamburger&&$('#ssBrandHome'))brandRow.insertBefore(hamburger,$('#ssBrandHome'));
+ const viewGroup=$('#hdr .vtog');
+ if(viewGroup){const grid=$('#btnGrid'),flow=$('#btnFlow'),list=$('#btnList');if(grid&&flow&&list)viewGroup.append(grid,flow,list);}
+ const menu=$('#userMenuWrap');
+ if(menu&&header){header.append(menu);menu.classList.add('ss6144-header-profile');}
+ if(header&&!$('#ss6144Settings')){
+   const settings=document.createElement('button');
+   settings.type='button';settings.className='ss6144-header-setting';settings.id='ss6144Settings';
+   settings.title='Settings';settings.setAttribute('aria-label','Open settings');
+   settings.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33A1.65 1.65 0 0 0 14 20.86V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33A1.65 1.65 0 0 0 4.6 15 1.65 1.65 0 0 0 3.09 14H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6 1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09A1.65 1.65 0 0 0 19.4 15z"/></svg>';
+   settings.addEventListener('click',()=>window.openSett?.());
+   if(menu)header.insertBefore(settings,menu);else header.append(settings);
+ }
+ const count=$('#countPill');if(count)count.hidden=true;
+ // Re-enable the existing receiver, including its needle pause handler.
+ const receiver=$('#ss57Receiver');
+ if(receiver){receiver.removeAttribute('aria-hidden');receiver.inert=false;}
+})();
