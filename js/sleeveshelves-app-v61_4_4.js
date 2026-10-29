@@ -1966,6 +1966,8 @@
       render();
     } else if(event.kind==='paused') {
       if(session.status==='playing'){session.status='paused';render();}
+    } else if(event.kind==='playing') {
+      if(session.status==='paused' && pendingTrackIndex===null){session.status='playing';render();}
     } else if(event.kind==='error')showPlaybackError(event.error);
   }
   function tick(now) {
@@ -2867,41 +2869,59 @@
   async function playAt(ctx,index=0){
     const map=assertMap(ctx);const selected=map[index];if(!selected)throw new Error('No Spotify track matched for that groove.');
     const token=++activeToken;
-    active={token,map,index,side:ctx.side,record:ctx.record,startedAt:Date.now(),lastPos:0,lastDuration:0,changing:false,paused:false};
+    active={token,map,index,side:ctx.side,record:ctx.record,tracks:ctx.tracks,sessionId:crypto.randomUUID(),startedAt:Date.now(),lastPos:0,lastDuration:0,changing:false,paused:false};
     if(!transferred){
       await request('/me/player',{method:'PUT',body:{device_ids:[deviceId],play:false}});
       transferred=true;
       // Spotify documents that ordering is not guaranteed across Player commands.
       await new Promise(r=>setTimeout(r,350));
     }
-    await request('/me/player/play?'+new URLSearchParams({device_id:deviceId}),{method:'PUT',body:{uris:[selected.uri],position_ms:0}});
+    // Queue the remainder of the physical side, not a single song. Spotify's
+    // native playback transitions are reliable even when SDK end events are sparse.
+    await request('/me/player/play?'+new URLSearchParams({device_id:deviceId}),{method:'PUT',body:{uris:map.slice(index).map(t=>t.uri),position_ms:0}});
     return active;
   }
   async function pause(){if(!active)return;active.paused=true;await player.pause();}
   async function resume(){if(!active)return;active.paused=false;await player.resume();}
   async function stop(){activeToken++;active=null;try{await player?.pause?.();}catch{}}
-  // A single Spotify track is queued at a time, never an album context. Only the selected
-  // physical side is allowed to advance. The SDK is polled for actual playhead position.
+  // A full physical side is queued in track order; never the unrelated album/artist context.
+  // The SDK is polled for actual playhead position and for recording verified digital listens.
   async function observe(state){
     if(!active||!state?.track_window?.current_track)return;
-    const a=active,uri=state.track_window.current_track.uri, expected=a.map[a.index]?.uri;
-    if(uri!==expected){
-      // Spotify may briefly report the previous song during a new device transfer.
-      if(Date.now()-a.startedAt<3000)return;
-      // After that grace window, halt unexpected Spotify Connect content.
-      if(!a.changing){a.changing=true;await player.pause().catch(()=>{});a.changing=false;
-        window.DW_TURNTABLE_V45?.reportProviderEvent({providerId:'spotify',kind:'error',error:'Spotify was changed outside SleeveShelves. Use Drop needle to resume this record.'});}
-      return;
+    const a=active,uri=state.track_window.current_track.uri;
+    if(a.changing)return;
+    if(uri!==a.map[a.index]?.uri){
+      // Native Spotify queue advances to the next matched track on its own.
+      // Restrict progression to the rest of this physical side only.
+      const next=a.map.findIndex((track,i)=>i>a.index && track.uri===uri);
+      if(next>=0){a.index=next;a.startedAt=Date.now();a.lastPos=0;}
+      else {
+        if(Date.now()-a.startedAt<2000)return; // transient transfer state
+        a.changing=true;
+        try{await player.pause();}catch{}
+        finally{a.changing=false;}
+        window.DW_TURNTABLE_V45?.reportProviderEvent({providerId:'spotify',kind:'finished'});
+        return;
+      }
     }
     const duration=state.duration||state.track_window.current_track.duration_ms||0;
     const position=Math.max(0,state.position||0);
     const isPlaying=!state.paused;
     a.lastPos=position;a.lastDuration=duration;
     window.DW_TURNTABLE_V45?.reportProviderEvent({providerId:'spotify',kind:'progress',index:a.index,seconds:position/1000,duration:duration/1000});
-    if(!isPlaying && !a.paused && duration>0 && position>duration-1200){await finishTrack(a);return;}
+    // Only real Spotify playback events can qualify as digital listens.
+    window.dispatchEvent(new CustomEvent('sleeveshelves:spotify-playback',{
+      detail:{sessionId:a.sessionId,shelfId:a.record.shelfId,artist:a.record.artist,album:a.record.album,
+        side:a.side,position:a.tracks[a.index]?.position||'',title:a.tracks[a.index]?.title||'',
+        uri,seconds:position/1000,duration:duration/1000,playing:isPlaying}
+    }));
+    if(!isPlaying && !a.paused && duration>0 && position>=duration-1100 && a.index===a.map.length-1){
+      await finishTrack(a);return;
+    }
+    if(isPlaying && !a.paused)window.DW_TURNTABLE_V45?.reportProviderEvent({providerId:'spotify',kind:'playing'});
     if(!isPlaying && !a.paused && Date.now()-a.startedAt>2000 && position<duration-1200){window.DW_TURNTABLE_V45?.reportProviderEvent({providerId:'spotify',kind:'paused'});}
-    // To avoid Spotify autoplaying after a single-track queue, park near the run-out.
-    if(isPlaying && duration>0 && position>=duration-175 && !a.changing){await finishTrack(a);}
+    // At the end of the last physical track, stop Spotify's recommendation autoplay.
+    if(isPlaying && a.index===a.map.length-1 && duration>0 && position>=duration-500 && !a.changing){await finishTrack(a);}
   }
   async function finishTrack(a){
     if(!active || active.token!==a.token || a.changing)return;
@@ -2909,9 +2929,11 @@
     try{
       await player.pause();
       if(!active||active.token!==a.token)return;
+      // Native Spotify queue handles transitions. Only finish at side run-out.
       if(a.index+1 >= a.map.length){active=null;window.DW_TURNTABLE_V45?.reportProviderEvent({providerId:'spotify',kind:'finished'});return;}
+      // Spotify paused unexpectedly mid-side; restore queued remainder.
       const next=a.index+1;
-      await playAt({record:a.record,side:a.side,tracks:preparing.tracks},next);
+      await playAt({record:a.record,side:a.side,tracks:a.tracks},next);
       if(active)window.DW_TURNTABLE_V45?.reportProviderEvent({providerId:'spotify',kind:'progress',index:next,seconds:0,duration:0});
     }catch(e){report(e);window.DW_TURNTABLE_V45?.reportProviderEvent({providerId:'spotify',kind:'error',error:e});}
     finally{a.changing=false;}
@@ -3075,10 +3097,19 @@
  // The reference places navigation and grid actions ahead of search.
  const h1=$('#hdr .h1');
  if(h1){
-  const actions=document.createElement('div');actions.className='ss-toolbar-leading';
-  const collapse=document.createElement('button');collapse.type='button';collapse.className='ss-leading-btn';collapse.title='Toggle navigation';collapse.setAttribute('aria-label','Toggle navigation');collapse.textContent='☰';collapse.addEventListener('click',()=>$('#ssCollapseNav')?.click());
-  const grid=document.createElement('button');grid.type='button';grid.className='ss-leading-btn';grid.title='Grid view';grid.setAttribute('aria-label','Grid view');grid.innerHTML='▦';grid.addEventListener('click',()=>$('#btnGrid')?.click());
-  actions.append(collapse,grid);h1.prepend(actions);
+  // V61.4.3: navigation toggle belongs to the left sidebar, not the search bar.
+  // Preserve the original collapse handler/session preference via its existing button.
+  const brandRow=$('#ssNav .ss-brand-row');
+  if(brandRow && !$('#ssSidebarHamburger')){
+    const collapse=document.createElement('button');
+    collapse.type='button';collapse.id='ssSidebarHamburger';collapse.className='ss-leading-btn';
+    collapse.title='Collapse or expand navigation';collapse.setAttribute('aria-label','Collapse or expand navigation');
+    collapse.innerHTML='<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
+    collapse.addEventListener('click',()=>$('#ssCollapseNav')?.click());
+    brandRow.append(collapse);
+  }
+  // Former redundant square/Grid shortcut intentionally removed; view switcher remains.
+
  }
 
  // Reference collection shortcuts. Real group/filter engines own every state change.
@@ -3605,3 +3636,239 @@
   },true);
 })();
 
+
+/* MODULE: sleeveshelves-v61.4.3.js */
+/* V61.4.3: additive UI repairs and automatic Spotify Listening Diary.
+ * No physical-listened record fields are ever modified by this module.
+ */
+(() => {
+  'use strict';
+  const $ = (s, root=document) => root.querySelector(s);
+  const clear = $('#ssSearchClear'), search = $('#gSearch');
+  if (clear && search) {
+    const sync = () => { clear.hidden = !search.value; };
+    search.addEventListener('input', sync);
+    clear.addEventListener('click', () => {
+      search.value='';
+      search.dispatchEvent(new Event('input',{bubbles:true}));
+      search.focus();
+    });
+    sync();
+  }
+
+  const panel = $('#ssPanellistening');
+  if (!panel || !window.supabase?.createClient || !window.DEAD_WAX_SUPABASE) return;
+  const cfg=window.DEAD_WAX_SUPABASE;
+  const db=window.supabase.createClient(cfg.url,cfg.anonKey);
+  const wrap=document.createElement('section');
+  wrap.className='ss-digital-diary';
+  wrap.setAttribute('aria-label','Digital listening diary');
+  wrap.innerHTML='<h3>Digital listens <span>SPOTIFY</span></h3><p class="ss-diary-explainer">Tracks are logged automatically after 30 seconds of confirmed playback. Vinyl listens stay separate.</p><div id="ssDigitalDiaryStatus" role="status"></div><div id="ssDigitalDiaryEntries"></div>';
+  panel.append(wrap);
+  const status=$('#ssDigitalDiaryStatus',wrap),entries=$('#ssDigitalDiaryEntries',wrap);
+  const trackers=new Map();
+  let displayedShelf='', latestRequest=0, unavailable=false;
+  const escape = v=>String(v??'');
+  async function who(){
+    const {data,error}=await db.auth.getUser();
+    if(error)throw error;
+    return data?.user || null;
+  }
+  function message(msg){status.textContent=msg;}
+  function renderEntries(rows){
+    entries.replaceChildren();
+    if(!rows?.length){message('No digital listens yet for this record.');return;}
+    message(`${rows.length} recent digital ${rows.length===1?'listen':'listens'}`);
+    for(const r of rows){
+      const item=document.createElement('div');item.className='ss-diary-entry';
+      const title=document.createElement('strong');title.textContent=`${r.side||''}${r.track_position?' · '+r.track_position:''}  ${r.track_title||'Untitled track'}`;
+      const date=document.createElement('span');date.textContent=new Date(r.listened_at).toLocaleString();
+      item.append(title,date);entries.append(item);
+    }
+  }
+  async function refresh(shelf){
+    const request=++latestRequest;
+    displayedShelf=shelf;
+    entries.replaceChildren();
+    if(!shelf){message('Open a record to see its digital listening history.');return;}
+    message('Loading digital listens…');
+    try {
+      const user=await who();if(request!==latestRequest)return;
+      if(!user){message('Sign in to view your listening history.');return;}
+      const res=await db.from('digital_listening_events').select('side,track_position,track_title,listened_at').eq('user_id',user.id).eq('shelf_id',shelf).order('listened_at',{ascending:false}).limit(30);
+      if(request!==latestRequest)return;
+      if(res.error)throw res.error;
+      unavailable=false;renderEntries(res.data||[]);
+    } catch(error) {
+      if(request!==latestRequest)return;
+      unavailable=true;
+      console.warn('Digital listening diary unavailable:',error);
+      message('Digital listening history unavailable. Apply the included Supabase V61.4.3 SQL migration to enable automatic logging.');
+    }
+  }
+  const code=$('#mCode');
+  if(code){
+    let last='';
+    const sync=()=>{const shelf=code.textContent.trim();if(shelf!==last){last=shelf;void refresh(shelf);}};
+    new MutationObserver(sync).observe(code,{childList:true,characterData:true,subtree:true});
+    sync();
+  }
+  window.addEventListener('sleeveshelves:spotify-playback',event=>{
+    const d=event.detail||{};
+    if(!d.sessionId || !d.shelfId || !d.uri || !d.position) return;
+    const key=[d.sessionId,d.side,d.position,d.uri].join(':');
+    let t=trackers.get(key);
+    const now=performance.now();
+    if(!t){
+      t={earned:0,lastAt:now,lastSeconds:Number(d.seconds)||0,logged:false,saving:false};
+      trackers.set(key,t);
+      // No cross-session ghost listens from previous player sessions.
+      if(trackers.size>400)trackers.delete(trackers.keys().next().value);
+      return;
+    }
+    const seconds=Number(d.seconds)||0;
+    const dt=(now-t.lastAt)/1000;
+    const progress=seconds-t.lastSeconds;
+    // Only observed, advancing, unpaused Spotify playback counts. Match the
+    // playback position change to real elapsed time to reject manual seeks.
+    // Large, consistent deltas are allowed when background tabs are throttled.
+    if(d.playing && dt>0 && dt<900 && progress>0 && Math.abs(progress-dt)<3.5){
+      t.earned+=Math.min(dt,progress);
+    }
+    t.lastAt=now;t.lastSeconds=seconds;
+    if(t.earned>=30 && !t.logged && !t.saving){
+      t.saving=true;
+      void (async()=>{
+        try{
+          const user=await who();if(!user)throw new Error('Session expired');
+          const record=await db.from('records').select('id').eq('user_id',user.id).eq('shelf_id',d.shelfId).maybeSingle();
+          if(record.error)throw record.error;
+          if(!record.data?.id)throw new Error('Physical record not found for digital listen');
+          const row={
+            user_id:user.id, record_id:record.data.id, shelf_id:d.shelfId,
+            side:d.side||'',track_position:d.position,track_title:d.title||'',
+            spotify_uri:d.uri, session_key:key,seconds_listened:Math.floor(t.earned)
+          };
+          const saved=await db.from('digital_listening_events').upsert(row,{onConflict:'user_id,session_key',ignoreDuplicates:true});
+          if(saved.error)throw saved.error;
+          t.logged=true;
+          if(displayedShelf===d.shelfId)await refresh(displayedShelf);
+        }catch(error){
+          console.warn('Could not save digital listen:',error);
+          if(displayedShelf===d.shelfId)message('Could not save this digital listen. Check the Supabase Listening Diary migration and connection.');
+        }finally{t.saving=false;}
+      })();
+    }
+  });
+})();
+
+
+
+/* MODULE: SleeveShelves V61.4.4 approved sidebar player & header controls.
+   Presentation-only, bound to the existing real turntable session.
+   The original Grid, List, Cover Flow and filter handlers remain intact. */
+(()=>{
+  'use strict';
+  const $=(s,r=document)=>r.querySelector(s);
+  const nav=$('#ssNav'),header=$('#hdr .h-right'), api=window.DW_TURNTABLE_V45;
+  if(!nav||!header||!api||!$('#ssNav .ss-brand-row'))return;
+
+  // Approved header order: hamburger, brand; Grid, Cover Flow, List, Filters.
+  const brandRow=$('#ssNav .ss-brand-row'),hamburger=$('#ssSidebarHamburger');
+  if(brandRow&&hamburger&&$('#ssBrandHome'))brandRow.insertBefore(hamburger,$('#ssBrandHome'));
+  const viewGroup=$('#hdr .vtog');
+  if(viewGroup){const grid=$('#btnGrid'),flow=$('#btnFlow'),list=$('#btnList');if(grid&&flow&&list)viewGroup.append(grid,flow,list);}
+  // Move the actual, already-wired account menu. No cloned auth controls.
+  const menu=$('#userMenuWrap');
+  if(menu){header.append(menu);menu.classList.add('ss6144-header-profile');}
+  // Settings is a separate action, and profile retains the existing menu/sign-out.
+  const settings=document.createElement('button');
+  settings.type='button';settings.className='ss6144-header-setting';settings.id='ss6144Settings';
+  settings.title='Settings';settings.setAttribute('aria-label','Open settings');
+  settings.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33A1.65 1.65 0 0 0 14 20.86V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15 1.65 1.65 0 0 0 3.09 14H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6 1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09A1.65 1.65 0 0 0 19.4 15z"/></svg>';
+  settings.addEventListener('click',()=>window.openSett?.());
+  if(menu)header.insertBefore(settings,menu);else header.append(settings);
+  // Move the album count out of the search/header area; sidebar already shows it.
+  const count=$('#countPill');if(count)count.hidden=true;
+
+  // The earlier miniature receiver remains functional internally, but there is
+  // only one visible playback presentation and only one actual playback session.
+  const receiver=$('#ss57Receiver');
+  if(receiver){receiver.setAttribute('aria-hidden','true');}
+  const player=document.createElement('section');
+  player.id='ss6144SidebarPlayer';player.className='ss6144-player';player.hidden=true;
+  player.setAttribute('aria-label','Now playing vinyl');
+  player.innerHTML=`
+    <div class="ss6144-deck" role="img" aria-label="Top-down vinyl turntable with tonearm">
+      <div class="ss6144-platter"><div class="ss6144-vinyl">
+        <div class="ss6144-grooves"></div>
+        <div class="ss6144-label"><img class="ss6144-label-art" alt=""/></div>
+        <span class="ss6144-spindle"></span>
+      </div></div>
+      <svg class="ss6144-tonearm" viewBox="0 0 168 252" aria-hidden="true">
+        <defs>
+          <linearGradient id="ss6144Metal" x1="0" y1="0" x2="1" y2=".25"><stop offset="0" stop-color="#5d574e"/><stop offset=".23" stop-color="#fff0cd"/><stop offset=".48" stop-color="#b4a18a"/><stop offset=".75" stop-color="#e7bf77"/><stop offset="1" stop-color="#33271f"/></linearGradient>
+          <radialGradient id="ss6144Pivot"><stop offset="0" stop-color="#decba4"/><stop offset=".4" stop-color="#8b6b41"/><stop offset=".69" stop-color="#2a211a"/><stop offset="1" stop-color="#0d0907"/></radialGradient>
+          <filter id="ss6144Shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
+        </defs>
+        <path d="M134 19 L126 68 Q120 93 109 113 L38 214" fill="none" stroke="#000" stroke-opacity=".65" stroke-width="15" filter="url(#ss6144Shadow)"/>
+        <path d="M134 19 L126 68 Q120 93 109 113 L38 214" fill="none" stroke="url(#ss6144Metal)" stroke-width="8.5" stroke-linecap="round"/>
+        <path d="M134 19 L126 68 Q120 93 109 113 L38 214" fill="none" stroke="#fff4d8" stroke-opacity=".48" stroke-width="1.2" stroke-linecap="round"/>
+        <circle cx="134" cy="19" r="26" fill="#0b0806" stroke="#aa8148" stroke-width="2"/>
+        <circle cx="134" cy="19" r="21" fill="url(#ss6144Pivot)" stroke="#e2b472" stroke-opacity=".55"/>
+        <circle cx="134" cy="19" r="9" fill="#2a1c12" stroke="#cba46b" stroke-width="3"/>
+        <path d="M126 44 L144 56" stroke="#31241a" stroke-width="11" stroke-linecap="round"/>
+        <path d="M126 44 L144 56" stroke="url(#ss6144Metal)" stroke-width="6" stroke-linecap="round"/>
+        <g transform="rotate(30 38 214)"><rect x="23" y="205" width="30" height="26" rx="4" fill="#100d0b" stroke="#cba06a" stroke-width="1.6"/><rect x="27" y="226" width="22" height="14" rx="2" fill="#1d1510"/><circle cx="32" cy="210" r="1.6" fill="#dcac62"/><circle cx="44" cy="210" r="1.6" fill="#dcac62"/><path d="M38 240l-4 9" stroke="#cfac7a" stroke-width="1.4"/></g>
+      </svg>
+      <span class="ss6144-deck-led" aria-hidden="true"></span>
+      <button type="button" class="ss6144-pause" id="ss6144Pause" aria-label="Pause playback" title="Pause or resume playback">
+        <svg class="ss6144-pause-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="5" width="3.5" height="14" rx="1"/><rect x="14" y="5" width="3.5" height="14" rx="1"/></svg>
+        <svg class="ss6144-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5L19 12 8 19Z"/></svg>
+      </button>
+    </div>
+    <div class="ss6144-nowline"><span class="ss6144-light"></span><span id="ss6144Status">NOW SPINNING</span><span class="ss6144-side" id="ss6144Side"></span></div>
+    <div class="ss6144-info"><div class="ss6144-cover"><img id="ss6144Cover" alt=""/></div><div class="ss6144-copy"><strong id="ss6144Album"></strong><span id="ss6144Artist"></span><span id="ss6144Track"></span></div></div>`;
+  const footer=$('#ssNav .ss-nav-footer');
+  if(footer)nav.insertBefore(player,footer);else nav.append(player);
+  $('#ss6144Pause').addEventListener('click',()=>{void api.toggleNeedle?.();});
+  // Keep sidebar out of the collapsed 62-pixel rail. When restored, it comes back.
+  let lastCover='';
+  let lastStateSignature='';
+  let grailForSession=false,lastRecord='';
+  function sync(){
+    const state=api.getState?.();
+    const active=!!(state&&!['stopped','finished'].includes(state.status));
+    if(!active){player.hidden=true;lastStateSignature='';grailForSession=false;return;}
+    player.hidden=false;
+    const key=state.record||state.shelfId||'';
+    if(key!==lastRecord){lastRecord=key;grailForSession=false;}
+    if($('#detOv')?.classList.contains('on') && $('#detModal.grail-detail'))grailForSession=true;
+    const signature=[state.status,state.album,state.artist,state.currentTrack?.title,state.side,state.cover,grailForSession].join('|');
+    if(signature===lastStateSignature)return;
+    lastStateSignature=signature;
+    player.classList.toggle('ss6144-playing',state.status==='playing');
+    player.classList.toggle('ss6144-paused',state.status!=='playing');
+    player.classList.toggle('ss6144-grail',grailForSession);
+    $('#ss6144Status').textContent=state.status==='playing'?'NOW SPINNING':state.status==='loading'?'CUEING RECORD':'NEEDLE LIFTED';
+    $('#ss6144Side').textContent=state.side?'SIDE '+state.side:'';
+    $('#ss6144Album').textContent=state.album||'Untitled album';
+    $('#ss6144Artist').textContent=state.artist||'';
+    $('#ss6144Track').textContent=state.currentTrack?.title||'';
+    const button=$('#ss6144Pause');button.setAttribute('aria-label',state.status==='playing'?'Pause playback':'Resume playback');
+    button.disabled=state.status==='loading';
+    const cover=state.cover||'';
+    if(lastCover!==cover){lastCover=cover;
+      const safe=/^(https?:\/\/|data:image\/(?:png|jpeg|webp|gif);base64,)/i.test(cover);
+      for(const id of ['ss6144Cover']){const img=$('#'+id);img.hidden=!safe;if(safe)img.src=cover;else img.removeAttribute('src');}
+      const label=$('.ss6144-label-art',player);label.hidden=!safe;if(safe)label.src=cover;else label.removeAttribute('src');
+      player.classList.toggle('ss6144-no-cover',!safe);
+    }
+  }
+  document.addEventListener('sleeveshelves:playback',sync);
+  window.addEventListener('focus',sync);
+  // V45 fires session events as the needle/track changes; only a slow fallback
+  // poll is needed for browsers that throttle background event delivery.
+  setInterval(sync,1250);
+  sync();
+})();

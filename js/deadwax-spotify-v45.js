@@ -202,41 +202,59 @@
   async function playAt(ctx,index=0){
     const map=assertMap(ctx);const selected=map[index];if(!selected)throw new Error('No Spotify track matched for that groove.');
     const token=++activeToken;
-    active={token,map,index,side:ctx.side,record:ctx.record,startedAt:Date.now(),lastPos:0,lastDuration:0,changing:false,paused:false};
+    active={token,map,index,side:ctx.side,record:ctx.record,tracks:ctx.tracks,sessionId:crypto.randomUUID(),startedAt:Date.now(),lastPos:0,lastDuration:0,changing:false,paused:false};
     if(!transferred){
       await request('/me/player',{method:'PUT',body:{device_ids:[deviceId],play:false}});
       transferred=true;
       // Spotify documents that ordering is not guaranteed across Player commands.
       await new Promise(r=>setTimeout(r,350));
     }
-    await request('/me/player/play?'+new URLSearchParams({device_id:deviceId}),{method:'PUT',body:{uris:[selected.uri],position_ms:0}});
+    // Queue the remainder of the physical side, not a single song. Spotify's
+    // native playback transitions are reliable even when SDK end events are sparse.
+    await request('/me/player/play?'+new URLSearchParams({device_id:deviceId}),{method:'PUT',body:{uris:map.slice(index).map(t=>t.uri),position_ms:0}});
     return active;
   }
   async function pause(){if(!active)return;active.paused=true;await player.pause();}
   async function resume(){if(!active)return;active.paused=false;await player.resume();}
   async function stop(){activeToken++;active=null;try{await player?.pause?.();}catch{}}
-  // A single Spotify track is queued at a time, never an album context. Only the selected
-  // physical side is allowed to advance. The SDK is polled for actual playhead position.
+  // A full physical side is queued in track order; never the unrelated album/artist context.
+  // The SDK is polled for actual playhead position and for recording verified digital listens.
   async function observe(state){
     if(!active||!state?.track_window?.current_track)return;
-    const a=active,uri=state.track_window.current_track.uri, expected=a.map[a.index]?.uri;
-    if(uri!==expected){
-      // Spotify may briefly report the previous song during a new device transfer.
-      if(Date.now()-a.startedAt<3000)return;
-      // After that grace window, halt unexpected Spotify Connect content.
-      if(!a.changing){a.changing=true;await player.pause().catch(()=>{});a.changing=false;
-        window.DW_TURNTABLE_V45?.reportProviderEvent({providerId:'spotify',kind:'error',error:'Spotify was changed outside SleeveShelves. Use Drop needle to resume this record.'});}
-      return;
+    const a=active,uri=state.track_window.current_track.uri;
+    if(a.changing)return;
+    if(uri!==a.map[a.index]?.uri){
+      // Native Spotify queue advances to the next matched track on its own.
+      // Restrict progression to the rest of this physical side only.
+      const next=a.map.findIndex((track,i)=>i>a.index && track.uri===uri);
+      if(next>=0){a.index=next;a.startedAt=Date.now();a.lastPos=0;}
+      else {
+        if(Date.now()-a.startedAt<2000)return; // transient transfer state
+        a.changing=true;
+        try{await player.pause();}catch{}
+        finally{a.changing=false;}
+        window.DW_TURNTABLE_V45?.reportProviderEvent({providerId:'spotify',kind:'finished'});
+        return;
+      }
     }
     const duration=state.duration||state.track_window.current_track.duration_ms||0;
     const position=Math.max(0,state.position||0);
     const isPlaying=!state.paused;
     a.lastPos=position;a.lastDuration=duration;
     window.DW_TURNTABLE_V45?.reportProviderEvent({providerId:'spotify',kind:'progress',index:a.index,seconds:position/1000,duration:duration/1000});
-    if(!isPlaying && !a.paused && duration>0 && position>duration-1200){await finishTrack(a);return;}
+    // Only real Spotify playback events can qualify as digital listens.
+    window.dispatchEvent(new CustomEvent('sleeveshelves:spotify-playback',{
+      detail:{sessionId:a.sessionId,shelfId:a.record.shelfId,artist:a.record.artist,album:a.record.album,
+        side:a.side,position:a.tracks[a.index]?.position||'',title:a.tracks[a.index]?.title||'',
+        uri,seconds:position/1000,duration:duration/1000,playing:isPlaying}
+    }));
+    if(!isPlaying && !a.paused && duration>0 && position>=duration-1100 && a.index===a.map.length-1){
+      await finishTrack(a);return;
+    }
+    if(isPlaying && !a.paused)window.DW_TURNTABLE_V45?.reportProviderEvent({providerId:'spotify',kind:'playing'});
     if(!isPlaying && !a.paused && Date.now()-a.startedAt>2000 && position<duration-1200){window.DW_TURNTABLE_V45?.reportProviderEvent({providerId:'spotify',kind:'paused'});}
-    // To avoid Spotify autoplaying after a single-track queue, park near the run-out.
-    if(isPlaying && duration>0 && position>=duration-175 && !a.changing){await finishTrack(a);}
+    // At the end of the last physical track, stop Spotify's recommendation autoplay.
+    if(isPlaying && a.index===a.map.length-1 && duration>0 && position>=duration-500 && !a.changing){await finishTrack(a);}
   }
   async function finishTrack(a){
     if(!active || active.token!==a.token || a.changing)return;
@@ -244,9 +262,11 @@
     try{
       await player.pause();
       if(!active||active.token!==a.token)return;
+      // Native Spotify queue handles transitions. Only finish at side run-out.
       if(a.index+1 >= a.map.length){active=null;window.DW_TURNTABLE_V45?.reportProviderEvent({providerId:'spotify',kind:'finished'});return;}
+      // Spotify paused unexpectedly mid-side; restore queued remainder.
       const next=a.index+1;
-      await playAt({record:a.record,side:a.side,tracks:preparing.tracks},next);
+      await playAt({record:a.record,side:a.side,tracks:a.tracks},next);
       if(active)window.DW_TURNTABLE_V45?.reportProviderEvent({providerId:'spotify',kind:'progress',index:next,seconds:0,duration:0});
     }catch(e){report(e);window.DW_TURNTABLE_V45?.reportProviderEvent({providerId:'spotify',kind:'error',error:e});}
     finally{a.changing=false;}
