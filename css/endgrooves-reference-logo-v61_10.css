@@ -1,0 +1,33 @@
+/* Endgrooves V61.10: faithful user-selected wordmark art, no second circular logo.
+   The SVG icons, navigation, clicks, data adapters and prior styles are unchanged. */
+html body.ss-app-mode.eg-brass #ssApp:not(.ss-nav-min) #ssNav .ss-brand-row.eg-brand-lockup{
+  padding-bottom:13px!important;
+}
+html body.ss-app-mode.eg-brass #ssApp:not(.ss-nav-min) #ssNav #ssBrandHome{
+  position:absolute!important;left:5px!important;right:5px!important;bottom:2px!important;
+  width:calc(100% - 10px)!important;height:30px!important;min-height:30px!important;
+  margin:0!important;padding:0!important;
+}
+html body.ss-app-mode.eg-brass #ssApp:not(.ss-nav-min) #ssNav .ss-brand-type{
+  display:flex!important;width:100%!important;max-width:100%!important;
+  padding:0 2px!important;justify-content:center!important;align-items:center!important;
+}
+html body.ss-app-mode.eg-brass #ssNav .eg-reference-wordmark{
+  display:block!important;width:100%!important;max-width:222px!important;
+  height:auto!important;max-height:42px!important;object-fit:contain!important;
+  filter:none!important;transform:none!important;
+}
+html body.ss-app-mode.eg-brass #ssApp.ss-nav-min #ssNav .ss-brand-art,
+html body.ss-app-mode.eg-brass #ssApp.ss-nav-min #ssNav #ssBrandHome{
+  border-radius:6px!important;
+}
+html body.ss-app-mode.eg-brass #ssApp.ss-nav-min #ssNav .eg-brand-mark{
+  width:42px!important;height:42px!important;object-fit:contain!important;
+  filter:none!important;
+}
+@media (max-width: 780px){
+ html body.ss-app-mode.eg-brass #ssNav .eg-reference-wordmark{max-width:212px!important;}
+}
+@media (prefers-reduced-motion: reduce){
+ html body.ss-app-mode.eg-brass #ssApp.ss-nav-min #ssNav .eg-brand-mark{transition:none!important}
+}
