@@ -77,6 +77,7 @@ html body .dw-auth-panel::before,html body .dw-auth-panel::after{content:none!im
 <link rel="stylesheet" href="css/sleeveshelves-v61_5-ux.css?v=61.5.0">
 <link rel="stylesheet" href="css/endgrooves-brass-v61_7.css?v=61.7.0">
 <link rel="stylesheet" href="css/endgrooves-polished-brass-v61_8.css?v=61.8.0">
+<link rel="stylesheet" href="css/endgrooves-groove-wordmark-v61_9.css?v=61.9.0">
 <body class="ss-app-mode eg-brass">
 <svg xmlns="http://www.w3.org/2000/svg" id="egIconSprite" aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden;pointer-events:none"><defs><symbol id="eg-vinyl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="6.2"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="2.5"/><circle cx="12" cy="12" r=".8" fill="currentColor" stroke="none"/></symbol>
 <symbol id="eg-shelf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="4.2" height="16" rx=".8"/><rect x="7.9" y="3" width="4" height="17" rx=".8"/><rect x="13" y="4.5" width="3.7" height="15.5" rx=".7"/><path d="m18 5 3.4 13.7-3.4.9-3.5-13.6Z"/><path d="M2 21h20"/></symbol>
@@ -116,7 +117,7 @@ html body .dw-auth-panel::before,html body .dw-auth-panel::after{content:none!im
 <a class="skip-link" href="#mainArea">Skip to collection</a>
 <div id="ssApp" class="ss-app">
   <aside id="ssNav" class="ss-nav" aria-label="Collection navigation">
-    <div class="ss-brand-row eg-brand-lockup"><button id="ssBrandHome" type="button" class="ss-brand" aria-label="Endgrooves · All records"><span class="ss-brand-art"><img src="assets/endgrooves-mark.svg" class="ss-logo-icon eg-brand-mark" alt=""></span><span class="ss-brand-type"><strong>Endgrooves</strong><small>Your records. Your stories.</small></span></button><button type="button" id="ssCollapseNav" class="ss-collapse" aria-label="Collapse navigation" aria-expanded="true" title="Collapse navigation">‹‹</button></div>
+    <div class="ss-brand-row eg-brand-lockup"><button id="ssBrandHome" type="button" class="ss-brand" aria-label="Endgrooves · All records"><span class="ss-brand-art"><img src="assets/endgrooves-mark.svg" class="ss-logo-icon eg-brand-mark" alt=""></span><span class="ss-brand-type"><strong class="eg-engraved-wordmark" aria-label="Endgrooves"><span class="eg-wordmark-text" aria-hidden="true">ENDGR</span><span class="eg-wordmark-record" aria-hidden="true"><img src="assets/endgrooves-mark.svg" alt=""></span><span class="eg-wordmark-text" aria-hidden="true">OVES</span></strong></span></button><button type="button" id="ssCollapseNav" class="ss-collapse" aria-label="Collapse navigation" aria-expanded="true" title="Collapse navigation">‹‹</button></div>
     <div class="ss-nav-scroll"><div class="ss-nav-caption">YOUR ARCHIVE</div><nav class="ss-nav-primary" aria-label="Browse archive">
       <button type="button" data-ss-nav="all" class="ss-nav-item is-active" title="All records"><span class="ss-nav-ico"><svg class="eg-icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#eg-shelf"></use></svg></span><span class="ss-nav-name">All Records</span><span class="ss-nav-count" id="ssAllCount"></span></button>
       <button type="button" data-ss-nav="listened" class="ss-nav-item" title="Listened records"><span class="ss-nav-ico"><svg class="eg-icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#eg-listening"></use></svg></span><span class="ss-nav-name">Listened</span></button>
@@ -407,6 +408,7 @@ html body .dw-auth-panel::before,html body .dw-auth-panel::after{content:none!im
 <script src="js/sleeveshelves-v61_5-ux.js?v=61.5.0"></script>
 <script src="js/endgrooves-icons-v61_7.js?v=61.7.0"></script>
 <script src="js/endgrooves-sidebar-v61_8.js?v=61.8.0"></script>
+<script src="js/endgrooves-brand-v61_9.js?v=61.9.0"></script>
 <script>
 // Deployment integrity guard. Does not touch authentication or stored data.
 window.addEventListener('load', () => {

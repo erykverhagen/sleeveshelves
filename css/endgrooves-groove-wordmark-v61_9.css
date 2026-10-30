@@ -1,0 +1,86 @@
+/* Endgrooves V61.9 · approved Groove Line wordmark in the sidebar.
+   Respects app state, preserves original navigation and collection handling.
+   No solid metallic discs or EG monogram: only fine-line brown brass grooves. */
+html body.ss-app-mode.eg-brass #ssNav .ss-brand-row.eg-brand-lockup{
+ position:relative!important;box-sizing:border-box!important;display:flex!important;
+ flex-direction:column!important;align-items:center!important;justify-content:flex-end!important;
+ min-height:92px!important;height:92px!important;max-height:92px!important;
+ padding:12px 7px 20px!important;gap:0!important;overflow:hidden!important;
+}
+/* The expanded menu toggle floats above the logotype rather than stealing its width. */
+html body.ss-app-mode.eg-brass #ssApp:not(.ss-nav-min) #ssNav #ssSidebarHamburger{
+ position:absolute!important;z-index:3!important;top:7px!important;right:8px!important;left:auto!important;
+ order:0!important;width:27px!important;height:27px!important;min-height:27px!important;
+ flex:0 0 27px!important;border-radius:8px!important;opacity:.79!important;
+}
+html body.ss-app-mode.eg-brass #ssApp:not(.ss-nav-min) #ssNav #ssSidebarHamburger:hover{opacity:1!important}
+html body.ss-app-mode.eg-brass #ssApp:not(.ss-nav-min) #ssNav #ssBrandHome{
+ order:1!important;display:flex!important;flex:0 0 auto!important;
+ margin:0!important;padding:0!important;min-height:39px!important;height:39px!important;
+ width:100%!important;min-width:0!important;justify-content:center!important;
+ align-items:center!important;gap:0!important;overflow:visible!important;
+}
+html body.ss-app-mode.eg-brass #ssApp:not(.ss-nav-min) #ssNav .ss-brand-art{display:none!important}
+html body.ss-app-mode.eg-brass #ssNav .ss-brand-type{
+ display:flex!important;flex:0 1 auto!important;align-items:center!important;
+ justify-content:center!important;min-width:0!important;max-width:100%!important;overflow:visible!important;
+}
+html body.ss-app-mode.eg-brass #ssNav .ss-brand-type .eg-engraved-wordmark{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ max-width:none!important;width:max-content!important;overflow:visible!important;
+ font-family:'Cormorant Garamond',Georgia,serif!important;
+ font-weight:600!important;font-size:clamp(21px,1.75vw,28px)!important;
+ line-height:1!important;white-space:nowrap!important;letter-spacing:-.025em!important;
+ color:#eed5b6!important;text-shadow:0 1px 0 rgba(0,0,0,.43)!important;
+}
+html body.ss-app-mode.eg-brass #ssNav .eg-wordmark-text{display:inline!important}
+html body.ss-app-mode.eg-brass #ssNav .eg-wordmark-record{
+ display:inline-grid!important;place-items:center!important;
+ height:.94em!important;width:.94em!important;flex:0 0 .94em!important;
+ margin:0 -.012em 0 -.005em!important;
+}
+html body.ss-app-mode.eg-brass #ssNav .eg-wordmark-record img{
+ width:100%!important;height:100%!important;display:block!important;
+}
+html body.ss-app-mode.eg-brass #ssNav .ss-brand-type small{display:none!important}
+/* A slim rail shows one thing: the very same record mark used as the O. */
+html body.ss-app-mode.eg-brass #ssApp.ss-nav-min #ssNav .ss-brand-row.eg-brand-lockup{
+ flex-direction:column!important;align-items:center!important;justify-content:center!important;
+ min-height:76px!important;height:76px!important;max-height:76px!important;
+ padding:8px 4px!important;gap:0!important;
+}
+html body.ss-app-mode.eg-brass #ssApp.ss-nav-min #ssNav #ssSidebarHamburger{display:none!important}
+html body.ss-app-mode.eg-brass #ssApp.ss-nav-min #ssNav #ssBrandHome{
+ display:grid!important;place-items:center!important;order:0!important;
+ height:52px!important;width:52px!important;min-height:52px!important;max-width:52px!important;
+ flex:0 0 52px!important;min-width:0!important;margin:0!important;
+ border-radius:50%!important;cursor:pointer!important;
+}
+html body.ss-app-mode.eg-brass #ssApp.ss-nav-min #ssNav .ss-brand-art{
+ display:grid!important;place-items:center!important;
+ height:44px!important;width:44px!important;flex:0 0 44px!important;
+ overflow:visible!important;
+}
+html body.ss-app-mode.eg-brass #ssApp.ss-nav-min #ssNav .eg-brand-mark{
+ display:block!important;width:44px!important;height:44px!important;
+ transform:none!important;filter:none!important;
+ transition:transform .35s ease!important;
+}
+html body.ss-app-mode.eg-brass #ssApp.ss-nav-min #ssNav .ss-brand-type{display:none!important}
+html body.ss-app-mode.eg-brass #ssApp.ss-nav-min #ssNav #ssBrandHome:hover .eg-brand-mark,
+html body.ss-app-mode.eg-brass #ssApp.ss-nav-min #ssNav #ssBrandHome:focus-visible .eg-brand-mark{transform:rotate(30deg)!important}
+html body.ss-app-mode.eg-brass #ssApp.ss-nav-min #ssNav #ssBrandHome:focus-visible{outline:2px solid #d1a375!important;outline-offset:2px}
+/* No polished glint: clean linework on the record mark. */
+html body.ss-app-mode.eg-brass #ssNav .ss-brand-art::after{display:none!important;content:none!important}
+@media (max-width:1160px){
+ html body.ss-app-mode.eg-brass #ssApp:not(.ss-nav-min) #ssNav .ss-brand-type .eg-engraved-wordmark{font-size:22px!important}
+}
+@media (min-width:1161px) and (max-width:1570px){
+ html body.ss-app-mode.eg-brass #ssApp:not(.ss-nav-min) #ssNav .ss-brand-type .eg-engraved-wordmark{font-size:24px!important}
+}
+@media (max-width:780px){
+ html body.ss-app-mode.eg-brass #ssApp:not(.ss-nav-min) #ssNav .ss-brand-type .eg-engraved-wordmark{font-size:24px!important}
+}
+@media (prefers-reduced-motion:reduce){
+ html body.ss-app-mode.eg-brass #ssApp.ss-nav-min #ssNav .eg-brand-mark{transition:none!important}
+}
