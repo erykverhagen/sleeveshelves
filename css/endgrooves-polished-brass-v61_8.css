@@ -1,0 +1,108 @@
+/* Endgrooves V61.8: warmer antique brass + reflective foil of original gold board.
+   Purely cosmetic. Reuses the existing button IDs, nav-collapse handler and stored state. */
+:root{--gold:#c59a6d;--gl:#f3d8ae;--gd:#9a6a49;--gx:#593827;--eg-brass:#c69a70;--eg-brass-light:#efcea4}
+html body.eg-brass{--gold:#c59a6d;--gl:#f3d8ae;--gd:#9a6a49;--gx:#593827;--eg-brass:#c69a70;--eg-brass-light:#efcea4}
+/* Real polished metal: desaturated brown/copper core, crisp ivory reflection. */
+html body.eg-brass .btn-add{
+ background:linear-gradient(125deg,#fff0d5 0%,#dab182 10%,#b47c4b 31%,#845537 56%,#ca9967 79%,#e6c59d 100%)!important;
+ color:#2a1a11!important;border-color:#e0b990!important;
+ box-shadow:inset 0 2px 2px rgba(255,250,234,.65),inset 0 -3px 6px rgba(58,31,18,.3),0 2px 10px rgba(0,0,0,.35)!important;
+}
+html body.eg-brass .btn-add:hover{background:linear-gradient(125deg,#fff4df,#dcad79 24%,#926040 60%,#edc79e)!important}
+html body.eg-brass button.eg-brass-disc{
+ background:linear-gradient(145deg,#fff1d5 0%,#d8ad7c 13%,#af764a 39%,#805338 67%,#d7af7d 100%)!important;
+ border-color:rgba(250,216,170,.82)!important;
+ box-shadow:inset 0 2px 2px #fff4d29c,inset 0 -4px 6px #331d1688,0 3px 13px #0007!important;
+}
+html body.eg-brass .ss-nav-item.is-active{background:linear-gradient(105deg,rgba(211,157,100,.24),rgba(120,69,38,.11))!important;border-color:rgba(225,171,111,.36)!important}
+html body.eg-brass #ssNav.ss-nav{background:linear-gradient(160deg,#34241b 0%,#21160f 49%,#170f0c 100%)!important}
+/* Preserve crisp engraved glyphs; warm highlights on active states. */
+html body.eg-brass .ss-nav-ico .eg-icon{color:#d8b68f;filter:drop-shadow(0 1px 0 #6c432a)}
+html body.eg-brass .ss-nav-item.is-active .ss-nav-ico .eg-icon{color:#ffe5bf;filter:drop-shadow(0 0 4px #a9784688)}
+html body.eg-brass .ss-nav-item:hover .eg-icon{filter:drop-shadow(0 0 5px #d7a97577)}
+/* Repair squeezed sidebar brand: reserve width for every control at every rail width. */
+html body.ss-app-mode.eg-brass #ssNav .ss-brand-row.eg-brand-lockup{
+ box-sizing:border-box!important;display:flex!important;flex-direction:row!important;align-items:center!important;
+ justify-content:flex-start!important;gap:6px!important;min-width:0!important;
+ padding:7px 8px!important;overflow:hidden!important;isolation:isolate;
+}
+html body.ss-app-mode.eg-brass #ssNav .ss-brand-row #ssSidebarHamburger{
+ display:grid!important;place-items:center!important;order:0!important;flex:0 0 31px!important;
+ width:31px!important;height:32px!important;min-height:32px!important;padding:0!important;
+ border:1px solid rgba(222,178,129,.28)!important;border-radius:9px!important;
+ color:#f0cda3!important;background:linear-gradient(135deg,#3b281d,#241711)!important;
+ transition:background .18s ease,border-color .18s ease,box-shadow .18s ease!important;
+}
+html body.ss-app-mode.eg-brass #ssNav #ssSidebarHamburger:hover{border-color:#d4a679!important;box-shadow:0 0 0 3px #b78a5133!important}
+html body.ss-app-mode.eg-brass #ssNav #ssSidebarHamburger svg{width:19px!important;height:19px!important;display:block!important;transition:transform .32s ease}
+html body.ss-app-mode.eg-brass #ssNav #ssBrandHome{
+ order:1!important;display:flex!important;flex:1 1 auto!important;min-width:0!important;
+ gap:6px!important;align-items:center!important;justify-content:flex-start!important;overflow:hidden!important;
+}
+html body.ss-app-mode.eg-brass #ssNav .ss-brand-art{
+ flex:0 0 39px!important;width:39px!important;height:43px!important;display:grid!important;place-items:center!important;overflow:visible!important;
+}
+html body.ss-app-mode.eg-brass #ssNav .ss-brand-art .eg-brand-mark{
+ display:block!important;width:41px!important;height:41px!important;max-width:none!important;
+ filter:drop-shadow(0 1px 2px #0008) drop-shadow(0 0 4px #b7804836)!important;
+ transform-origin:50% 50%;transition:transform .48s cubic-bezier(.22,.7,.2,1),filter .3s ease;
+}
+html body.ss-app-mode.eg-brass #ssNav .ss-brand-type{display:flex!important;flex:1 1 auto!important;min-width:0!important;max-width:100%!important;overflow:hidden!important}
+html body.ss-app-mode.eg-brass #ssNav .ss-brand-type strong{
+ color:#f7e4c9!important;font-family:'Cormorant Garamond',Georgia,serif!important;
+ font-size:clamp(1.07rem,1.21vw,1.34rem)!important;font-weight:600!important;
+ letter-spacing:-.038em!important;line-height:1.06!important;white-space:nowrap!important;
+ max-width:100%!important;overflow:hidden!important;text-overflow:clip!important;
+}
+html body.ss-app-mode.eg-brass #ssNav .ss-brand-type small{
+ font-size:.38rem!important;line-height:1.6!important;letter-spacing:.045em!important;color:#c69f77!important;
+ white-space:nowrap!important;max-width:100%!important;overflow:hidden!important;
+}
+html body.ss-app-mode.eg-brass #ssNav .ss-brand-row:not(.eg-during-fold) .eg-brand-mark{will-change:auto}
+/* Fold: the polished record spins as its label slips behind the compact rail. */
+html body.ss-app-mode.eg-brass #ssApp.ss-nav-min #ssNav .ss-brand-row.eg-brand-lockup{
+ flex-direction:column!important;align-items:center!important;justify-content:center!important;
+ gap:1px!important;padding:3px 3px!important;min-height:72px!important;max-height:72px!important;height:72px!important;
+}
+html body.ss-app-mode.eg-brass #ssApp.ss-nav-min #ssNav #ssBrandHome{
+ order:0!important;flex:0 0 38px!important;width:48px!important;min-height:38px!important;
+ justify-content:center!important;overflow:visible!important;
+}
+html body.ss-app-mode.eg-brass #ssApp.ss-nav-min #ssNav .ss-brand-art{
+ width:36px!important;height:36px!important;flex:0 0 36px!important;
+}
+html body.ss-app-mode.eg-brass #ssApp.ss-nav-min #ssNav .ss-brand-art .eg-brand-mark{
+ width:37px!important;height:37px!important;transform:rotate(175deg) scale(.94)!important;
+}
+html body.ss-app-mode.eg-brass #ssApp.ss-nav-min #ssNav .ss-brand-type{display:none!important}
+html body.ss-app-mode.eg-brass #ssApp.ss-nav-min #ssNav #ssSidebarHamburger{
+ order:1!important;flex:0 0 25px!important;width:35px!important;height:25px!important;min-height:25px!important;
+ background:rgba(90,58,36,.22)!important;border-color:rgba(230,178,122,.16)!important;
+}
+html body.ss-app-mode.eg-brass #ssApp.ss-nav-min #ssNav #ssSidebarHamburger svg{width:16px!important;height:16px!important;transform:rotate(90deg)}
+/* A short, restrained sweep on the record when a user changes rail state. */
+html body.ss-app-mode.eg-brass #ssNav .ss-brand-art{position:relative}
+html body.ss-app-mode.eg-brass #ssNav .ss-brand-art::after{
+ content:'';position:absolute;inset:5px;border-radius:50%;pointer-events:none;
+ background:linear-gradient(115deg,transparent 35%,rgba(255,246,220,.32) 48%,transparent 56%);
+ mix-blend-mode:screen;opacity:0;transform:rotate(-25deg);
+}
+html body.ss-app-mode.eg-brass #ssNav .ss-brand-row.eg-during-fold .ss-brand-art::after{animation:egFoilGlint .52s ease-out both}
+@keyframes egFoilGlint{0%{opacity:0;transform:rotate(-70deg)}45%{opacity:.9}100%{opacity:0;transform:rotate(155deg)}}
+/* Do not let the collapsed rail's decorations bleed into the expanded surface. */
+html body.ss-app-mode.eg-brass #ssApp #ssNav.ss-nav::before,
+html body.ss-app-mode.eg-brass #ssApp #ssNav.ss-nav::after{display:none!important;content:none!important}
+@media(max-width:1160px){
+ html body.ss-app-mode.eg-brass #ssApp:not(.ss-nav-min) #ssNav .ss-brand-type strong{font-size:1.15rem!important}
+ html body.ss-app-mode.eg-brass #ssApp:not(.ss-nav-min) #ssNav .ss-brand-art{flex-basis:33px!important;width:33px!important}
+ html body.ss-app-mode.eg-brass #ssApp:not(.ss-nav-min) #ssNav .eg-brand-mark{width:35px!important;height:35px!important}
+}
+@media(max-width:520px){
+ html body.ss-app-mode.eg-brass #ssApp:not(.ss-nav-min) #ssNav{max-width:none!important}
+ html body.ss-app-mode.eg-brass #ssApp:not(.ss-nav-min) #ssNav .ss-brand-type strong{font-size:1.21rem!important}
+}
+@media(prefers-reduced-motion:reduce){
+ html body.ss-app-mode.eg-brass #ssNav .ss-brand-art .eg-brand-mark,
+ html body.ss-app-mode.eg-brass #ssNav #ssSidebarHamburger svg{transition:none!important}
+ html body.ss-app-mode.eg-brass #ssNav .ss-brand-art::after{animation:none!important}
+}

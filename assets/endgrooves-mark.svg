@@ -1,1 +1,103 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Endgrooves engraved record symbol"><defs><radialGradient id="egbr" cx="36%" cy="27%" r="83%"><stop stop-color="#e0c29a"/><stop offset=".28" stop-color="#b98b5c"/><stop offset=".63" stop-color="#92663e"/><stop offset="1" stop-color="#3b271a"/></radialGradient><linearGradient id="egsheen" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f1dcb8" stop-opacity=".78"/><stop offset=".38" stop-color="#b18a61" stop-opacity=".13"/><stop offset="1" stop-color="#53321b" stop-opacity=".5"/></linearGradient></defs><circle cx="64" cy="64" r="60" fill="url(#egbr)" stroke="#e7c498" stroke-width="1"/><g fill="none" stroke="#231811" opacity=".72"><circle cx="64" cy="64" r="56" stroke-width="1.8"/><circle cx="64" cy="64" r="53" stroke-width=".7"/><circle cx="64" cy="64" r="50" stroke-width="1.35"/><circle cx="64" cy="64" r="47.2" stroke-width=".9"/><circle cx="64" cy="64" r="44.4" stroke-width="1.3"/><circle cx="64" cy="64" r="41.6" stroke-width=".8"/><circle cx="64" cy="64" r="38.8" stroke-width="1.2"/><circle cx="64" cy="64" r="36" stroke-width=".8"/><circle cx="64" cy="64" r="33.2" stroke-width="1.2"/><circle cx="64" cy="64" r="30.4" stroke-width=".65"/><circle cx="64" cy="64" r="27.7" stroke-width="1.1"/></g><circle cx="64" cy="64" r="23" fill="#362319" stroke="#ddb586" stroke-width="1.3"/><circle cx="64" cy="64" r="20" fill="url(#egsheen)" stroke="#9c744c" stroke-width=".6"/><text x="64" y="70" text-anchor="middle" font-family="Georgia,serif" font-weight="bold" font-size="21" fill="#2b1b11" letter-spacing="-2">EG</text><circle cx="64" cy="64" r="3" fill="#170f0a" stroke="#f0cc9b" stroke-width=".8"/></svg>
+<svg width="280" height="280" role="img" aria-label="Endgrooves polished brass vinyl record" viewBox="0 0 280 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Gold vinyl body gradient -->
+        <radialGradient id="gold-body" cx="29%" cy="22%" r="85%">
+          <stop offset="0%"   stop-color="#e0b787"/>
+          <stop offset="40%"  stop-color="#ae784b"/>
+          <stop offset="75%"  stop-color="#855534"/>
+          <stop offset="100%" stop-color="#4c2c1e"/>
+        </radialGradient>
+        <!-- Dead wax sheen -->
+        <radialGradient id="dwax-g" cx="35%" cy="25%" r="80%">
+          <stop offset="0%"   stop-color="#fff2d4" stop-opacity="0.15"/>
+          <stop offset="100%" stop-color="#71472e" stop-opacity="0.3"/>
+        </radialGradient>
+        <!-- Label sheen -->
+        <radialGradient id="lbl-g" cx="30%" cy="23%" r="84%">
+          <stop offset="0%"   stop-color="#fff2d9" stop-opacity="0.45"/>
+          <stop offset="55%"  stop-color="#bf9266" stop-opacity="0"/>
+          <stop offset="100%" stop-color="#4c2c1e" stop-opacity="0.3"/>
+        </radialGradient>
+        <linearGradient id="foil-sweep" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#fff8e7" stop-opacity=".58"/>
+          <stop offset=".22" stop-color="#f8dec0" stop-opacity=".18"/>
+          <stop offset=".47" stop-color="#7a4934" stop-opacity="0"/>
+          <stop offset=".68" stop-color="#fff5df" stop-opacity=".18"/>
+          <stop offset="1" stop-color="#4a2d20" stop-opacity=".38"/>
+        </linearGradient>
+        <radialGradient id="eg-gleam" cx="18%" cy="12%" r="86%">
+          <stop offset="0" stop-color="#fff9ec" stop-opacity=".93"/>
+          <stop offset=".18" stop-color="#fff1d7" stop-opacity=".53"/>
+          <stop offset=".40" stop-color="#f7d3ab" stop-opacity=".14"/>
+          <stop offset=".69" stop-color="#b77d52" stop-opacity="0"/>
+          <stop offset="1" stop-color="#2e1a15" stop-opacity=".21"/>
+        </radialGradient>
+        <!-- Arc paths -->
+        <path id="arc1" d="M140,140 m-63,0 a63,63 0 1,1 126,0 a63,63 0 1,1 -126,0"/>
+        <path id="arc2" d="M140,140 m-58,0 a58,58 0 1,1 116,0 a58,58 0 1,1 -116,0"/>
+      </defs>
+
+      <!-- Gold vinyl body -->
+      <circle cx="140" cy="140" r="139" fill="url(#gold-body)" stroke="#432719" stroke-width="0.8"/>
+
+      <circle cx="140" cy="140" r="137.5" fill="none" stroke="#ffe4bb" stroke-opacity=".55" stroke-width=".85"/>
+      <!-- ── BLACK GROOVES on brass — tight alternating bands ── -->
+      <circle cx="140" cy="140" r="134" fill="none" stroke="#0b0906" stroke-width="1.9"/>
+      <circle cx="140" cy="140" r="131" fill="none" stroke="#bc8b5f" stroke-width="0.8"/>
+      <circle cx="140" cy="140" r="128" fill="none" stroke="#0b0906" stroke-width="1.9"/>
+      <circle cx="140" cy="140" r="125" fill="none" stroke="#b27d4e" stroke-width="0.8"/>
+      <circle cx="140" cy="140" r="122" fill="none" stroke="#0b0906" stroke-width="1.8"/>
+      <circle cx="140" cy="140" r="119" fill="none" stroke="#af8057" stroke-width="0.8"/>
+      <circle cx="140" cy="140" r="116" fill="none" stroke="#0b0906" stroke-width="1.8"/>
+      <circle cx="140" cy="140" r="113" fill="none" stroke="#a4724d" stroke-width="0.7"/>
+      <circle cx="140" cy="140" r="110" fill="none" stroke="#0b0906" stroke-width="1.7"/>
+      <circle cx="140" cy="140" r="107" fill="none" stroke="#9d6a45" stroke-width="0.7"/>
+      <circle cx="140" cy="140" r="104" fill="none" stroke="#0b0906" stroke-width="1.7"/>
+      <circle cx="140" cy="140" r="101" fill="none" stroke="#966344" stroke-width="0.7"/>
+      <circle cx="140" cy="140" r="98"  fill="none" stroke="#0b0906" stroke-width="1.6"/>
+      <circle cx="140" cy="140" r="95"  fill="none" stroke="#946140" stroke-width="0.7"/>
+      <circle cx="140" cy="140" r="92"  fill="none" stroke="#0b0906" stroke-width="1.6"/>
+      <circle cx="140" cy="140" r="89"  fill="none" stroke="#8e5d3e" stroke-width="0.7"/>
+      <circle cx="140" cy="140" r="86"  fill="none" stroke="#0b0906" stroke-width="1.5"/>
+      <circle cx="140" cy="140" r="83"  fill="none" stroke="#82583b" stroke-width="0.7"/>
+
+      <!-- Taper into dead wax -->
+      <circle cx="140" cy="140" r="82"  fill="none" stroke="#0b0906" stroke-width="1.2"/>
+      <circle cx="140" cy="140" r="80"  fill="none" stroke="#785339" stroke-width="0.6"/>
+      <circle cx="140" cy="140" r="78"  fill="none" stroke="#0b0906" stroke-width="0.9"/>
+      <circle cx="140" cy="140" r="76"  fill="none" stroke="#735137" stroke-width="0.4"/>
+
+      <circle cx="140" cy="140" r="135" fill="url(#foil-sweep)" opacity=".72"/>
+      <circle cx="140" cy="140" r="135" fill="url(#eg-gleam)" opacity=".82"/>
+      <path d="M43 47 A139 139 0 0 1 238 64" stroke="#ffebca" stroke-opacity=".38" stroke-width="1.4" fill="none"/>
+      <!-- ── INNER BAND ── -->
+      <circle cx="140" cy="140" r="74"  fill="#b88559"/>
+      <circle cx="140" cy="140" r="74"  fill="url(#dwax-g)"/>
+      <circle cx="140" cy="140" r="74"  fill="none" stroke="#765034" stroke-width="0.8"/>
+      <circle cx="140" cy="140" r="54"  fill="none" stroke="#765034" stroke-width="0.5"/>
+
+      <!-- Inscription in dead wax -->
+      <text font-family="Jost,sans-serif" font-size="4.6" fill="#42291a" letter-spacing="1.3" font-weight="400" opacity="0.5">
+        <textPath href="#arc1" startOffset="13%">Made for the records we remember</textPath>
+      </text>
+      <text font-family="Jost,sans-serif" font-size="3.9" fill="#392417" letter-spacing="1.1" font-weight="300" opacity="0.38">
+        <textPath href="#arc2" startOffset="14%">so every collection may live for generations</textPath>
+      </text>
+
+      <!-- ── GOLD LABEL STICKER ── -->
+      <circle cx="141" cy="141" r="52"  fill="#533522" opacity="0.5"/>
+      <circle cx="140" cy="140" r="52"  fill="#bf9266"/>
+      <circle cx="140" cy="140" r="52"  fill="url(#lbl-g)"/>
+      <circle cx="140" cy="140" r="52"  fill="none" stroke="#91603c" stroke-width="0.9"/>
+      <circle cx="140" cy="140" r="47"  fill="none" stroke="#ba9167" stroke-width="0.5" opacity="0.5"/>
+      <circle cx="140" cy="140" r="44"  fill="none" stroke="#ba9167" stroke-width="0.3" opacity="0.3"/>
+
+      <!-- EG in engraved dark lacquer -->
+      <text x="140" y="131" text-anchor="middle"
+        font-family="Georgia,serif"
+        font-size="37" font-weight="600"
+        fill="#0b0906" letter-spacing="3">EG</text>
+
+      <!-- Spindle -->
+      <circle cx="140" cy="140" r="5" fill="#0b0906" stroke="#432719" stroke-width="0.6"/>
+    </svg>
