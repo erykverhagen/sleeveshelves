@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SleeveShelves · Your records. Your stories.</title>
-<link rel="icon" type="image/svg+xml" href="assets/sleeveshelves-favicon.svg">
+<title>Endgrooves · Your records. Your stories.</title>
+<link rel="icon" type="image/svg+xml" href="assets/endgrooves-favicon.svg">
 <script>
 try{
   if(localStorage.getItem('dw_high_contrast')==='1'){
@@ -54,8 +54,8 @@ html body .dw-turntable::before,html body .dw-turntable::after{content:none!impo
 html body .dw-deck{left:-43vmin!important;top:50%!important;width:122vmin!important;height:122vmin!important;min-width:820px!important;min-height:820px!important}
 html body .dw-platter{background:radial-gradient(circle at 50% 50%,#060504 0 3.6%,transparent 3.9%),radial-gradient(circle at 50% 50%,rgba(244,234,210,.82) 0 .68%,transparent .72%),repeating-radial-gradient(circle at 50% 50%,rgba(240,195,79,.065) 0 2px,rgba(0,0,0,0) 3px 10px),radial-gradient(circle at 50% 50%,#050403 0 68%,#15110d 69%,#070605 74%,#2a2118 75%,#070605 82%,#120d08 100%)!important;box-shadow:0 34px 120px rgba(0,0,0,.82),inset 0 0 0 3px rgba(240,195,79,.035),inset 0 0 95px rgba(0,0,0,.9)!important}
 html body .dw-record{inset:4.6%!important;overflow:hidden!important;background:radial-gradient(circle at 50% 50%,rgba(240,195,79,.07) 0 14%,transparent 15%),repeating-radial-gradient(circle at 50% 50%,rgba(244,234,210,.055) 0 1px,rgba(0,0,0,0) 2px 9px),radial-gradient(circle at 50% 50%,#070605 0 62%,#0c0907 100%)!important;box-shadow:inset 0 0 0 1px rgba(244,234,210,.035),inset 0 0 40px rgba(0,0,0,.82)!important}
-html body .dw-record::before{content:'DW'!important;position:absolute!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;font-family:'Cormorant Garamond',serif!important;font-size:clamp(7rem,18vmin,17rem)!important;line-height:.85!important;font-weight:600!important;letter-spacing:-.08em!important;color:rgba(208,154,36,.16)!important;text-shadow:0 0 34px rgba(208,154,36,.10)!important;pointer-events:none!important}
-html body .dw-record::after{content:'SleeveShelves'!important;position:absolute!important;left:50%!important;top:64%!important;transform:translateX(-50%)!important;font-family:'Cormorant Garamond',serif!important;font-size:clamp(1.2rem,3.2vmin,3.2rem)!important;font-weight:600!important;color:rgba(240,195,79,.18)!important;letter-spacing:.045em!important;white-space:nowrap!important;pointer-events:none!important}
+html body .dw-record::before{content:'EG'!important;position:absolute!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;font-family:'Cormorant Garamond',serif!important;font-size:clamp(7rem,18vmin,17rem)!important;line-height:.85!important;font-weight:600!important;letter-spacing:-.08em!important;color:rgba(208,154,36,.16)!important;text-shadow:0 0 34px rgba(208,154,36,.10)!important;pointer-events:none!important}
+html body .dw-record::after{content:'Endgrooves'!important;position:absolute!important;left:50%!important;top:64%!important;transform:translateX(-50%)!important;font-family:'Cormorant Garamond',serif!important;font-size:clamp(1.2rem,3.2vmin,3.2rem)!important;font-weight:600!important;color:rgba(240,195,79,.18)!important;letter-spacing:.045em!important;white-space:nowrap!important;pointer-events:none!important}
 html body .dw-label{display:flex!important;position:absolute!important;inset:34%!important;border-radius:50%!important;align-items:center!important;justify-content:center!important;background:radial-gradient(circle at 50% 42%,#f0c34f 0%,#d09a24 48%,#8d6815 100%)!important;border:2px solid rgba(11,9,6,.78)!important;box-shadow:0 0 0 8px rgba(208,154,36,.12),0 14px 44px rgba(0,0,0,.46),inset 0 2px 4px rgba(244,234,210,.28)!important;z-index:2!important}
 html body .dw-label .dw-mark{width:86%!important;height:86%!important;filter:drop-shadow(0 2px 6px rgba(0,0,0,.36))!important}html body .dw-spindle{z-index:3!important}
 html body .dw-tonearm{left:34vmin!important;right:auto!important;top:-2vmin!important;width:54vmin!important;height:54vmin!important;min-width:360px!important;min-height:360px!important;z-index:8!important;transform-origin:77% 12%!important;transform:rotate(-18deg)!important;filter:drop-shadow(0 14px 20px rgba(0,0,0,.54))!important}
@@ -75,19 +75,55 @@ html body .dw-auth-panel::before,html body .dw-auth-panel::after{content:none!im
 <link rel="stylesheet" href="css/sleeveshelves-affinity-v1.css?v=61.4.8-affinity1">
 <link rel="stylesheet" href="css/sleeveshelves-v61_4_9-nav-fix.css?v=61.4.9">
 <link rel="stylesheet" href="css/sleeveshelves-v61_5-ux.css?v=61.5.0">
-<body class="ss-app-mode">
+<link rel="stylesheet" href="css/endgrooves-brass-v61_7.css?v=61.7.0">
+<body class="ss-app-mode eg-brass">
+<svg xmlns="http://www.w3.org/2000/svg" id="egIconSprite" aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden;pointer-events:none"><defs><symbol id="eg-vinyl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="6.2"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="2.5"/><circle cx="12" cy="12" r=".8" fill="currentColor" stroke="none"/></symbol>
+<symbol id="eg-shelf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="4.2" height="16" rx=".8"/><rect x="7.9" y="3" width="4" height="17" rx=".8"/><rect x="13" y="4.5" width="3.7" height="15.5" rx=".7"/><path d="m18 5 3.4 13.7-3.4.9-3.5-13.6Z"/><path d="M2 21h20"/></symbol>
+<symbol id="eg-other-shelves" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3.5" width="13" height="15" rx="1.8"/><rect x="6.5" y="6" width="13.5" height="15" rx="1.8"/><path d="M9.5 8.5h7.5"/><path d="M9.5 11.5h6"/></symbol>
+<symbol id="eg-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="7"/><path d="m15.8 15.8 5.1 5.1"/></symbol>
+<symbol id="eg-filters" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18M3 12h18M3 19h18"/><circle cx="9" cy="5" r="2.2" fill="#241810"/><circle cx="16" cy="12" r="2.2" fill="#241810"/><circle cx="11" cy="19" r="2.2" fill="#241810"/></symbol>
+<symbol id="eg-add" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.4"/><path d="M12 6.7v10.6M6.7 12h10.6"/></symbol>
+<symbol id="eg-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M4 12h16"/></symbol>
+<symbol id="eg-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.4"/><path d="m10 7.7 6.5 4.3-6.5 4.3z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="eg-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.4"/><path d="M9 8v8M15 8v8" stroke-width="2.9"/></symbol>
+<symbol id="eg-favorite" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 9.1c0 5.3-8.6 10.3-8.6 10.3S3.4 14.4 3.4 9.1a4.7 4.7 0 0 1 8.6-2.5 4.7 4.7 0 0 1 8.6 2.5z"/></symbol>
+<symbol id="eg-grail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.7c.9 5.6 2.9 7.7 8.5 9.3-5.6 1.6-7.6 3.7-8.5 9.3-.9-5.6-2.9-7.7-8.5-9.3 5.6-1.6 7.6-3.7 8.5-9.3Z"/></symbol>
+<symbol id="eg-notes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></symbol>
+<symbol id="eg-listening" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13v-2a8 8 0 0 1 16 0v2"/><rect x="2.7" y="12.7" width="4" height="7" rx="1.5"/><rect x="17.3" y="12.7" width="4" height="7" rx="1.5"/></symbol>
+<symbol id="eg-collection" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></symbol>
+<symbol id="eg-discover" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="m15.7 8.3-2.1 5.3-5.3 2.1 2.1-5.3z"/><circle cx="12" cy="12" r=".6" fill="currentColor" stroke="none"/></symbol>
+<symbol id="eg-subscribe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="5"/><path d="M12 9v6M9 12h6"/></symbol>
+<symbol id="eg-account" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7.5" r="4"/><path d="M4.2 21v-1.6a7.8 7.8 0 0 1 15.6 0V21"/></symbol>
+<symbol id="eg-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="m11 5-7 7 7 7M4 12h17"/></symbol>
+<symbol id="eg-minimize" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M12 4v12m-5-5 5 5 5-5"/></symbol>
+<symbol id="eg-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5 19 19M19 5 5 19"/></symbol>
+<symbol id="eg-sleeve" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="1.8"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></symbol>
+<symbol id="eg-turntable" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3" width="19" height="18" rx="2"/><circle cx="10" cy="12" r="6.2"/><circle cx="10" cy="12" r="2.4"/><circle cx="10" cy="12" r=".7" fill="currentColor" stroke="none"/><path d="M17 6h2v3m-1-2-4 8"/></symbol>
+<symbol id="eg-diary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5c-2.3-1.8-4.9-2.1-8.5-1.8V4.5c3.9-.4 6.5.2 8.5 2 2-1.8 4.6-2.4 8.5-2v14.2c-3.6-.3-6.2 0-8.5 1.8ZM12 6.5v14"/></symbol>
+<symbol id="eg-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 2.7h3.4l.55 2.1a8 8 0 0 1 1.7.7l1.88-1.1 2.4 2.4-1.1 1.88c.3.54.54 1.1.7 1.7l2.1.55v3.4l-2.1.55a8 8 0 0 1-.7 1.7l1.1 1.88-2.4 2.4-1.88-1.1a8 8 0 0 1-1.7.7l-.55 2.1h-3.4l-.55-2.1a8 8 0 0 1-1.7-.7l-1.88 1.1-2.4-2.4 1.1-1.88a8 8 0 0 1-.7-1.7l-2.1-.55v-3.4l2.1-.55a8 8 0 0 1 .7-1.7l-1.1-1.88 2.4-2.4 1.88 1.1a8 8 0 0 1 1.7-.7z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="eg-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+<symbol id="eg-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5h13M8 12h13M8 19h13"/><path d="M3 5h1M3 12h1M3 19h1" stroke-width="3"/></symbol>
+<symbol id="eg-coverflow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="8" height="18" rx="1"/><path d="M5 6 2 8v8l3 2M19 6l3 2v8l-3 2"/></symbol>
+<symbol id="eg-shuffle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h3c5 0 6 12 12 12h3m-4-3 4 3-4 3M3 18h3c2 0 3.2-2 4.4-4M14 9c1-1.8 2-3 4-3h3m-4-3 4 3-4 3"/></symbol>
+<symbol id="eg-repeat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7h-12a4 4 0 0 0-4 4v1m18 0v1a4 4 0 0 1-4 4H5m3-3-3 3 3 3m8-16 3 3-3 3"/></symbol>
+<symbol id="eg-stop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
+<symbol id="eg-more" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.3" fill="currentColor" stroke="none"/></symbol>
+<symbol id="eg-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V3m-4 4 4-4 4 4M5 13v7h14v-7"/></symbol>
+<symbol id="eg-arrow-up-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5M8 5h11v11"/></symbol>
+<symbol id="eg-chevron-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></symbol>
+<symbol id="eg-heart-fill" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 9.1c0 5.3-8.6 10.3-8.6 10.3S3.4 14.4 3.4 9.1a4.7 4.7 0 0 1 8.6-2.5 4.7 4.7 0 0 1 8.6 2.5z" fill="currentColor" stroke="none"/></symbol></defs></svg>
 <a class="skip-link" href="#mainArea">Skip to collection</a>
 <div id="ssApp" class="ss-app">
   <aside id="ssNav" class="ss-nav" aria-label="Collection navigation">
-    <div class="ss-brand-row"><button id="ssBrandHome" type="button" class="ss-brand" aria-label="SleeveShelves · All records"><span class="ss-brand-art"><svg class="ss-logo-icon" viewBox="0 0 112 84" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="9" y="8" width="13" height="55" rx="1.5" fill="#E7B56A"/><rect x="27" y="8" width="13" height="55" rx="1.5" fill="#A96B39"/><rect x="45" y="8" width="13" height="55" rx="1.5" fill="#EAD6B3"/><rect x="63" y="8" width="13" height="55" rx="1.5" fill="#CA884B"/><rect x="81" y="8" width="13" height="55" rx="1.5" fill="#E4BC77" transform="rotate(-15 87.5 63)"/><path d="M5 69H108" stroke="#DEA347" stroke-width="3" stroke-linecap="round"/></svg></span><span class="ss-brand-type"><strong>SleeveShelves</strong><small>Your records. Your stories.</small></span></button><button type="button" id="ssCollapseNav" class="ss-collapse" aria-label="Collapse navigation" aria-expanded="true" title="Collapse navigation">‹‹</button></div>
+    <div class="ss-brand-row"><button id="ssBrandHome" type="button" class="ss-brand" aria-label="Endgrooves · All records"><span class="ss-brand-art"><img src="assets/endgrooves-mark.svg" class="ss-logo-icon eg-brand-mark" alt=""></span><span class="ss-brand-type"><strong>Endgrooves</strong><small>Your records. Your stories.</small></span></button><button type="button" id="ssCollapseNav" class="ss-collapse" aria-label="Collapse navigation" aria-expanded="true" title="Collapse navigation">‹‹</button></div>
     <div class="ss-nav-scroll"><div class="ss-nav-caption">YOUR ARCHIVE</div><nav class="ss-nav-primary" aria-label="Browse archive">
-      <button type="button" data-ss-nav="all" class="ss-nav-item is-active" title="All records"><span class="ss-nav-ico">▦</span><span class="ss-nav-name">All Records</span><span class="ss-nav-count" id="ssAllCount"></span></button>
-      <button type="button" data-ss-nav="listened" class="ss-nav-item" title="Listened records"><span class="ss-nav-ico">♫</span><span class="ss-nav-name">Listened</span></button>
-      <button type="button" data-ss-nav="favorites" class="ss-nav-item" title="Favorites"><span class="ss-nav-ico">♡</span><span class="ss-nav-name">Favorites</span></button>
-      <button type="button" data-ss-nav="grails" class="ss-nav-item" title="Grail records"><span class="ss-nav-ico">◇</span><span class="ss-nav-name">Grails</span></button>
-      <button type="button" data-ss-nav="discover" class="ss-nav-item" title="Surprise me with a record"><span class="ss-nav-ico">✧</span><span class="ss-nav-name">Surprise me</span></button>
+      <button type="button" data-ss-nav="all" class="ss-nav-item is-active" title="All records"><span class="ss-nav-ico"><svg class="eg-icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#eg-shelf"></use></svg></span><span class="ss-nav-name">All Records</span><span class="ss-nav-count" id="ssAllCount"></span></button>
+      <button type="button" data-ss-nav="listened" class="ss-nav-item" title="Listened records"><span class="ss-nav-ico"><svg class="eg-icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#eg-listening"></use></svg></span><span class="ss-nav-name">Listened</span></button>
+      <button type="button" data-ss-nav="favorites" class="ss-nav-item" title="Favorites"><span class="ss-nav-ico"><svg class="eg-icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#eg-favorite"></use></svg></span><span class="ss-nav-name">Favorites</span></button>
+      <button type="button" data-ss-nav="grails" class="ss-nav-item" title="Grail records"><span class="ss-nav-ico"><svg class="eg-icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#eg-grail"></use></svg></span><span class="ss-nav-name">Grails</span></button>
+      <button type="button" data-ss-nav="discover" class="ss-nav-item" title="Surprise me with a record"><span class="ss-nav-ico"><svg class="eg-icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#eg-discover"></use></svg></span><span class="ss-nav-name">Surprise me</span></button>
     </nav><div class="ss-nav-collection-title"><span class="ss-nav-caption">MY SHELF</span><button type="button" id="ssAddCollection" aria-label="Manage collections" title="Manage collections"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div><nav id="ssNavCollections" class="ss-nav-collections" aria-label="Your custom collections"></nav><section id="ssOtherShelves" aria-label="Other shelves"><div class="ss-nav-collection-title ss-other-shelves-title"><span class="ss-nav-caption">OTHER SHELVES</span></div><p class="ss-other-shelves-empty">No subscriptions yet</p><nav id="ssOtherShelvesList" class="ss-nav-collections" aria-label="Subscribed collections"></nav></section></div>
-    <footer class="ss-nav-footer"><div class="ss-footer-divider"></div><div id="ssProfileSlot"></div><div class="ss-footer-quiet"><span class="ss-footer-long">A home for the records that mean something.</span><span class="ss-footer-short">SS</span></div></footer>
+    <footer class="ss-nav-footer"><div class="ss-footer-divider"></div><div id="ssProfileSlot"></div><div class="ss-footer-quiet"><span class="ss-footer-long">A home for the records that mean something.</span><span class="ss-footer-short">EG</span></div></footer>
   </aside>
   <section id="ssWorkspace" class="ss-workspace" aria-label="Record collection canvas">
 <header id="hdr">
@@ -104,7 +140,7 @@ html body .dw-auth-panel::before,html body .dw-auth-panel::after{content:none!im
 <div class="jump-bar" id="jumpBar"></div>
 
 <main class="main" id="mainArea" tabindex="-1" aria-labelledby="mainHeading">
-  <h1 class="sr-only">SleeveShelves</h1>
+  <h1 class="sr-only">Endgrooves</h1>
   <h2 class="sr-only" id="mainHeading">Record collection</h2>
   <div id="gridWrap"></div>
   <div class="list-wrap" id="listWrap">
@@ -122,14 +158,14 @@ html body .dw-auth-panel::before,html body .dw-auth-panel::after{content:none!im
 <div id="coverFlowStatus" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 </section>
 <aside id="ssDetail" class="ss-detail" aria-label="Selected record details">
-  <div id="ssDetailPlaceholder" class="ss-detail-placeholder"><div class="ss-placeholder-mark"><svg class="ss-logo-icon" viewBox="0 0 112 84" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="9" y="8" width="13" height="55" rx="1.5" fill="#E7B56A"/><rect x="27" y="8" width="13" height="55" rx="1.5" fill="#A96B39"/><rect x="45" y="8" width="13" height="55" rx="1.5" fill="#EAD6B3"/><rect x="63" y="8" width="13" height="55" rx="1.5" fill="#CA884B"/><rect x="81" y="8" width="13" height="55" rx="1.5" fill="#E4BC77" transform="rotate(-15 87.5 63)"/><path d="M5 69H108" stroke="#DEA347" stroke-width="3" stroke-linecap="round"/></svg></div><div class="ss-placeholder-kicker">THE NEXT RECORD</div><h2>Pick a sleeve.</h2><p>Every cover has a story. Select a record from your collection to explore it.</p><button type="button" id="ssPickRandom">Surprise me ↗</button></div>
-  <div class="ss-detail-controls" id="ssDetailControls"><span>NOW BROWSING</span><button type="button" id="ssMinimizeDetail" aria-label="Minimize record details" title="Minimize details to a floating card">−</button></div>
+  <div id="ssDetailPlaceholder" class="ss-detail-placeholder"><div class="ss-placeholder-mark"><img src="assets/endgrooves-mark.svg" class="ss-logo-icon eg-placeholder-mark" alt=""></div><div class="ss-placeholder-kicker">THE NEXT RECORD</div><h2>Pick a sleeve.</h2><p>Every cover has a story. Select a record from your collection to explore it.</p><button type="button" id="ssPickRandom">Surprise me ↗</button></div>
+  <div class="ss-detail-controls" id="ssDetailControls"><span>NOW BROWSING</span><button type="button" id="ssMinimizeDetail" aria-label="Minimize record details" title="Minimize details to a floating card"><svg class="eg-icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#eg-minimize"></use></svg></button></div>
   <button id="ssRestoreDetail" type="button" class="ss-floating-detail" aria-label="Restore full record detail"><span class="ss-floating-cover"></span><span class="ss-floating-copy"><small>SELECTED RECORD · RESTORE</small><strong id="ssFloatingAlbum">Record detail</strong><span id="ssFloatingArtist"></span></span><span class="ss-floating-arrow">↗</span></button>
 
 <!-- DETAIL MODAL -->
 <div class="ov" id="detOv" aria-hidden="true">
   <div class="modal" id="detModal" role="dialog" aria-modal="true" aria-labelledby="mArtist" tabindex="-1">
-    <button type="button" class="m-close" id="mClose" aria-label="Close record details">✕</button>
+    <button type="button" class="m-close" id="mClose" aria-label="Close record details"><svg class="eg-icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#eg-close"></use></svg></button>
     <div class="rand-banner" id="rBanner" style="display:none">
       <div class="rb-icon">♫</div>
       <div><div class="rb-title">Give This Album a Spin</div><div class="rb-sub">Selected by your personal randomiser</div></div>
@@ -368,6 +404,7 @@ html body .dw-auth-panel::before,html body .dw-auth-panel::after{content:none!im
 <script src="js/sleeveshelves-supabase-adapter.js?v=61.4.8-affinity1"></script>
 <script src="js/sleeveshelves-affinity-ui.js?v=61.4.8-affinity1"></script>
 <script src="js/sleeveshelves-v61_5-ux.js?v=61.5.0"></script>
+<script src="js/endgrooves-icons-v61_7.js?v=61.7.0"></script>
 <script>
 // Deployment integrity guard. Does not touch authentication or stored data.
 window.addEventListener('load', () => {
@@ -375,7 +412,7 @@ window.addEventListener('load', () => {
   const notice=document.createElement('div');
   notice.setAttribute('role','alert');
   notice.style.cssText='position:fixed;z-index:2147483647;bottom:1rem;left:1rem;right:1rem;max-width:670px;margin:auto;padding:1rem 1.2rem;border:1px solid #e7b56a;border-radius:12px;background:#201208;color:#f4ead2;box-shadow:0 10px 40px #0009;font:14px/1.5 system-ui,sans-serif';
-  notice.textContent='SleeveShelves did not finish loading. The website files may be incomplete. Check GitHub Pages deployment and refresh. Your Supabase collection is not affected.';
+  notice.textContent='Endgrooves did not finish loading. The website files may be incomplete. Check GitHub Pages deployment and refresh. Your Supabase collection is not affected.';
   document.body.appendChild(notice);
 });
 </script>

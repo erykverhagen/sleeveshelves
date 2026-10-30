@@ -1,0 +1,55 @@
+/* Endgrooves V61.7 | Brass iconography / nameplate. Additive over tested V61.5.
+   Deliberately NO changes to Supabase/auth, filters, playlist state, collection logic. */
+:root{
+ --gold:#b68a59; --gl:#dbb68a; --gd:#956d45; --gx:#5b422e;
+ --eg-brass:#c69b6d; --eg-brass-light:#e4c59c; --eg-brass-deep:#8b6241;
+ --eg-ink:#16110d; --eg-icon-fill:#241810;
+}
+body.eg-brass{
+ --gold:#b68a59; --gl:#dbb68a; --gd:#956d45; --gx:#5b422e;
+ --eg-brass:#c69b6d; --eg-brass-light:#e4c59c; --eg-icon-fill:#241810;
+}
+/* A cool-toned brass patina rather than saturated yellow gold. */
+body.eg-brass .ss-nav{background:linear-gradient(156deg,#3a281d,#201710 45%,#160f0d)!important;}
+body.eg-brass .ss-workspace,body.eg-brass .ss-detail{border-color:rgba(196,146,96,.20)!important}
+body.eg-brass .ss-brand-row{border-bottom-color:rgba(199,155,111,.22)!important}
+body.eg-brass .ss-brand-art{width:46px;height:48px;flex-shrink:0}
+body.eg-brass .ss-brand-art .eg-brand-mark{width:47px;height:47px;object-fit:contain;filter:drop-shadow(0 2px 7px rgba(0,0,0,.3));}
+body.eg-brass .ss-brand-type strong{color:#f0ddc3!important;font-family:'Cormorant Garamond',serif!important;letter-spacing:-.02em!important;font-size:1.49rem!important}
+body.eg-brass .ss-brand-type small{color:var(--eg-brass)!important}
+body.eg-brass .ss-nav-ico{color:var(--eg-brass-light)!important;width:23px;height:25px;flex-basis:23px}
+body.eg-brass .ss-nav-ico .eg-icon{width:20px;height:20px;stroke-width:1.65}
+body.eg-brass .ss-nav-item.is-active .ss-nav-ico{color:#efd0a7!important;}
+body.eg-brass .ss-nav-item.is-active{background:linear-gradient(90deg,rgba(191,140,91,.25),rgba(121,81,47,.08))!important;border-color:rgba(192,143,95,.28)!important}
+body.eg-brass .ss-nav-item:hover .ss-nav-ico{color:#f2d4ad!important}
+body.eg-brass .ss-nav-collection-title .ss-nav-caption{color:#c8a17b!important}
+body.eg-brass .ss-nav-footer .ss-footer-short{color:#c89b6a!important}
+body.eg-brass .ss-placeholder-mark{display:flex;align-items:center;justify-content:center}
+body.eg-brass .ss-placeholder-mark .eg-placeholder-mark{width:clamp(60px,20%,110px);height:auto;opacity:.62;}
+/* Fine line-art defaults. Sizes respect the original control dimensions. */
+body.eg-brass .eg-icon{display:inline-block;width:20px;height:20px;flex:none;overflow:visible;vertical-align:middle;color:inherit;fill:none;stroke:currentColor;stroke-width:1.65;pointer-events:none}
+body.eg-brass .eg-icon--small{width:16px;height:16px}
+body.eg-brass .eg-icon--tiny{width:14px;height:14px}
+body.eg-brass .eg-icon--large{width:25px;height:25px}
+body.eg-brass .btn-add .eg-icon{width:17px;height:17px;margin-right:5px}
+body.eg-brass #filterToggle .eg-icon,body.eg-brass #userMenuBtn .eg-icon{width:19px;height:19px;color:#d8b183}
+body.eg-brass #ssAddCollection .eg-icon{width:20px;height:20px}
+body.eg-brass #hdr .ss615-search-zone #filterToggle{border-color:rgba(191,149,109,.38)!important;background:linear-gradient(145deg,#3d2920,#2c1c16)!important;}
+body.eg-brass #hdr .ss615-search-zone #filterToggle[aria-expanded="true"]{background:linear-gradient(150deg,#815934,#452d20)!important;border-color:#cba074!important}
+body.eg-brass #hdr #filterDrawer{border-color:rgba(196,153,113,.25)!important;background:linear-gradient(140deg,#34251b,#211711)!important}
+body.eg-brass .btn-add{background:linear-gradient(145deg,#b68a59,#85603b)!important;border:1px solid #d4ae81!important;color:#21150e!important;box-shadow:inset 0 1px 0 rgba(255,237,210,.34)!important}
+body.eg-brass .btn-add:hover{background:linear-gradient(145deg,#c79a65,#92683f)!important}
+body.eg-brass #ss615Back .eg-icon,body.eg-brass #ss57Minimize .eg-icon,body.eg-brass #mClose .eg-icon{width:18px;height:18px;stroke-width:1.85}
+body.eg-brass .m-close .eg-icon{color:inherit}
+body.eg-brass #ssMinimizeDetail .eg-icon{width:18px;height:18px}
+body.eg-brass #ss57Receiver [data-ss57] .eg-icon{width:18px;height:18px}
+body.eg-brass .ss-collection-item .ss-nav-ico .eg-icon{width:17px;height:17px}
+body.eg-brass #ssProfileSlot .eg-icon{width:19px;height:19px}
+body.eg-brass .ss57-empty-cover{font-family:'Cormorant Garamond',serif;letter-spacing:.06em}
+/* UI material treatments borrowed from the approved icon design board. */
+body.eg-brass button.eg-brass-disc{--eg-icon-fill:#302016;background:radial-gradient(circle at 32% 22%,#dcb98d 0%,#b58957 39%,#8b603b 75%,#63452d 100%)!important;color:#1e140e!important;border:1px solid #dfb98d!important;box-shadow:inset 0 1px 1px rgba(255,240,217,.45),0 2px 8px #0007!important;}
+body.eg-brass button.eg-brass-disc:hover{filter:brightness(1.1)}
+/* Essential product icons: no custom font, all scalable SVG, focus styles native. */
+body.eg-brass button:focus-visible .eg-icon{filter:drop-shadow(0 0 3px rgba(238,202,153,.55))}
+@media (max-width:460px){body.eg-brass .ss-brand-art .eg-brand-mark{width:39px;height:39px}body.eg-brass .ss-brand-type strong{font-size:1.31rem!important}}
+@media (prefers-reduced-motion:reduce){body.eg-brass .eg-icon{transition:none!important}}
