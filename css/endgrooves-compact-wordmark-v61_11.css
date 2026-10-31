@@ -1,0 +1,38 @@
+/* Endgrooves V61.11: compact wordmark correction only.
+   Built on complete V61.10 release; do not alter collapse controls, icons or functionality. */
+html body.ss-app-mode.eg-brass #ssApp:not(.ss-nav-min) #ssNav .ss-brand-row.eg-brand-lockup {
+  min-height:78px!important;
+  height:78px!important;
+  max-height:78px!important;
+  padding:8px 7px 13px!important;
+}
+html body.ss-app-mode.eg-brass #ssApp:not(.ss-nav-min) #ssNav #ssBrandHome {
+  left:5px!important;
+  right:5px!important;
+  bottom:3px!important;
+  width:calc(100% - 10px)!important;
+  height:25px!important;
+  min-height:25px!important;
+}
+html body.ss-app-mode.eg-brass #ssApp:not(.ss-nav-min) #ssNav .ss-brand-type {
+  width:100%!important;
+  max-width:100%!important;
+  justify-content:center!important;
+}
+html body.ss-app-mode.eg-brass #ssApp:not(.ss-nav-min) #ssNav .eg-reference-wordmark {
+  width:172px!important;
+  max-width:calc(100% - 18px)!important;
+  height:auto!important;
+  max-height:29px!important;
+  object-fit:contain!important;
+}
+/* The exact same record artwork remains the sole logo in collapsed mode. */
+html body.ss-app-mode.eg-brass #ssApp.ss-nav-min #ssNav .eg-brand-mark {
+  width:42px!important;height:42px!important;
+}
+@media (max-width:780px){
+  html body.ss-app-mode.eg-brass #ssApp:not(.ss-nav-min) #ssNav .eg-reference-wordmark {
+    width:160px!important;
+    max-height:27px!important;
+  }
+}
